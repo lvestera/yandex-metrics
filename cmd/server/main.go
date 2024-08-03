@@ -42,20 +42,12 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 
 func updateGauge(name string, mvalue string) bool {
 	_, err := strconv.ParseFloat(mvalue, 64)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func updateCounter(name string, mvalue string) bool {
 	_, err := strconv.ParseInt(mvalue, 10, 64)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 type MemStorage struct {
