@@ -16,10 +16,10 @@ type MetricClient struct {
 func (c *MetricClient) SendUpdate(mtype string, name string, value string) error {
 	url := fmt.Sprint(c.Host, "/update/", mtype, "/", name, "/", value)
 	resp, err := http.Post(url, "text/plain", bytes.NewReader([]byte("")))
-	defer resp.Body.Close()
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer resp.Body.Close()
 
 	return err
 }
