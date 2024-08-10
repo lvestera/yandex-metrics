@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -32,7 +31,6 @@ func (mh MetricsHandlers) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
-	fmt.Println(mh.Ms.GetAllMetrics())
 }
 
 func (mh MetricsHandlers) updateGauge(name string, mvalue string) bool {

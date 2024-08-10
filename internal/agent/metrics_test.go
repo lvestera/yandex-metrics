@@ -66,9 +66,9 @@ func TestSend(t *testing.T) {
 
 	var mockClient = &fakeClient{}
 
-	mockClient.On("SendUpdate", "gauge", "mg1", "1").Return(nil).Once()
-	mockClient.On("SendUpdate", "gauge", "mg2", "2").Return(nil).Once()
-	mockClient.On("SendUpdate", "counter", "mc1", "1").Return(nil).Once()
+	mockClient.On("SendUpdate", "gauge", "mg1", "1").Return(nil)
+	mockClient.On("SendUpdate", "gauge", "mg2", "2").Return(nil)
+	mockClient.On("SendUpdate", "counter", "mc1", "1").Return(nil)
 
 	go Send(metric, mockClient)
 	time.Sleep(10 * time.Second)
