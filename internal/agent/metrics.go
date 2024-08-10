@@ -6,10 +6,10 @@ import (
 	"runtime"
 	"time"
 
-	. "github.com/lvestera/yandex-metrics/internal/storage"
+	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
-var Metrics_name = [...]string{
+var MetricsName = [...]string{
 	"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys",
 	"HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects",
 	"HeapReleased", "HeapSys", "LastGC", "Lookups",
@@ -18,7 +18,7 @@ var Metrics_name = [...]string{
 	"PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc",
 }
 
-func Update(m Repository) {
+func Update(m storage.Repository) {
 
 	var rtm runtime.MemStats
 	for {
@@ -32,7 +32,7 @@ func Update(m Repository) {
 	}
 }
 
-func Send(m Repository, c MClient) {
+func Send(m storage.Repository, c MClient) {
 
 	for {
 		runtime.Gosched()
@@ -53,22 +53,22 @@ func Send(m Repository, c MClient) {
 func collectMetrics(rtm runtime.MemStats) map[string]float64 {
 	runtime.ReadMemStats(&rtm)
 
-	metrics_value := make(map[string]float64)
+	metricsValue := make(map[string]float64)
 
-	for _, mname := range Metrics_name {
+	for _, mname := range MetricsName {
 		r := reflect.ValueOf(rtm)
 		f := reflect.Indirect(r).FieldByName(mname)
 		if f.CanUint() {
-			metrics_value[mname] = float64(f.Uint())
+			metricsValue[mname] = float64(f.Uint())
 		}
 		if f.CanFloat() {
-			metrics_value[mname] = float64(f.Float())
+			metricsValue[mname] = float64(f.Float())
 		}
 
 	}
 
-	metrics_value["RandomValue"] = rand.Float64()
+	metricsValue["RandomValue"] = rand.Float64()
 
-	return metrics_value
+	return metricsValue
 
 }

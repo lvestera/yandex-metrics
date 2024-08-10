@@ -8,6 +8,7 @@ import (
 
 	. "github.com/lvestera/yandex-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMetricsHandlers(t *testing.T) {
@@ -20,12 +21,12 @@ func TestMetricsHandlers(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		requestUrl string
+		requestURL string
 		want       want
 	}{
 		{
 			name:       "OK gauge test",
-			requestUrl: "/update/gauge/metric/1",
+			requestURL: "/update/gauge/metric/1",
 			want: want{
 				statusCode:  200,
 				contentType: "text/plain",
@@ -39,7 +40,7 @@ func TestMetricsHandlers(t *testing.T) {
 		},
 		{
 			name:       "OK counter test",
-			requestUrl: "/update/counter/metric/1",
+			requestURL: "/update/counter/metric/1",
 			want: want{
 				statusCode:  200,
 				contentType: "text/plain",
@@ -53,7 +54,7 @@ func TestMetricsHandlers(t *testing.T) {
 		},
 		{
 			name:       "OK counter test2",
-			requestUrl: "/update/counter/metric/1",
+			requestURL: "/update/counter/metric/1",
 			want: want{
 				statusCode:  200,
 				contentType: "text/plain",
@@ -67,7 +68,7 @@ func TestMetricsHandlers(t *testing.T) {
 		},
 		{
 			name:       "Fail, no metric name",
-			requestUrl: "/update/counter/",
+			requestURL: "/update/counter/",
 			want: want{
 				statusCode:  404,
 				contentType: "text/plain; charset=utf-8",
@@ -79,7 +80,7 @@ func TestMetricsHandlers(t *testing.T) {
 		},
 		{
 			name:       "Fail, incorrect metric type",
-			requestUrl: "/update/other/metric/1",
+			requestURL: "/update/other/metric/1",
 			want: want{
 				statusCode:  400,
 				contentType: "text/plain",
@@ -108,7 +109,9 @@ func TestMetricsHandlers(t *testing.T) {
 			ts := httptest.NewServer(mux)
 			defer ts.Close()
 
-			result, _ := ts.Client().Post(fmt.Sprintf("%v%v", ts.URL, tt.requestUrl), "text/plain", nil)
+			result, err := ts.Client().Post(fmt.Sprintf("%v%v", ts.URL, tt.requestURL), "text/plain", nil)
+			require.NoError(t, err)
+			defer result.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))

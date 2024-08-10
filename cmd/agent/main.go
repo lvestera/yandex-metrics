@@ -1,21 +1,21 @@
 package main
 
 import (
-	. "github.com/lvestera/yandex-metrics/internal/agent"
-	. "github.com/lvestera/yandex-metrics/internal/storage"
+	"github.com/lvestera/yandex-metrics/internal/agent"
+	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
 func main() {
 
-	metric := &MemStorage{
+	metric := &storage.MemStorage{
 		Counters: make(map[string]int64),
 		Gauges:   make(map[string]float64),
 	}
 
-	c := &MetricClient{
+	c := &agent.MetricClient{
 		Host: "http://localhost:8080",
 	}
 
-	go Update(metric)
-	Send(metric, c)
+	go agent.Update(metric)
+	agent.Send(metric, c)
 }

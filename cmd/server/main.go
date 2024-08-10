@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
-	. "github.com/lvestera/yandex-metrics/internal/handlers"
-	. "github.com/lvestera/yandex-metrics/internal/storage"
+	"github.com/lvestera/yandex-metrics/internal/handlers"
+	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
 func main() {
@@ -16,12 +16,12 @@ func main() {
 // функция run будет полезна при инициализации зависимостей сервера перед запуском
 func run() error {
 
-	metric := &MemStorage{
+	metric := &storage.MemStorage{
 		Counters: make(map[string]int64),
 		Gauges:   make(map[string]float64),
 	}
 
-	mh := MetricsHandlers{Ms: metric}
+	mh := handlers.MetricsHandlers{Ms: metric}
 
 	mux := http.NewServeMux()
 	mux.Handle("POST /update/{mtype}/{name}/{value}", mh)

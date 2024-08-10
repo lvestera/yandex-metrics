@@ -19,7 +19,7 @@ func TestUpdate(t *testing.T) {
 
 	_, ok := metric.GetCounter("PollCount")
 	assert.False(t, ok)
-	for _, name := range Metrics_name {
+	for _, name := range MetricsName {
 		_, ok := metric.GetGauge(name)
 		assert.False(t, ok)
 	}
@@ -32,7 +32,7 @@ func TestUpdate(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, pollCount, val)
 
-	for _, name := range Metrics_name {
+	for _, name := range MetricsName {
 		_, ok := metric.GetGauge(name)
 		assert.True(t, ok)
 	}

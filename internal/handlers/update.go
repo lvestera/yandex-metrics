@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"strconv"
 
-	. "github.com/lvestera/yandex-metrics/internal/storage"
+	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
 type MetricsHandlers struct {
-	Ms Repository
+	Ms storage.Repository
 }
 
 func (mh MetricsHandlers) ServeHTTP(w http.ResponseWriter, r *http.Request) {
