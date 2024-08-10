@@ -2,7 +2,9 @@ package main
 
 import (
 	"net/http"
-	"strconv"
+
+	. "github.com/lvestera/yandex-metrics/internal/handlers"
+	. "github.com/lvestera/yandex-metrics/internal/storage"
 )
 
 func main() {
@@ -13,52 +15,16 @@ func main() {
 
 // функция run будет полезна при инициализации зависимостей сервера перед запуском
 func run() error {
-	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /update/{mtype}/{name}/{value}", updateHandler)
+	metric := &MemStorage{
+		Counters: make(map[string]int64),
+		Gauges:   make(map[string]float64),
+	}
+
+	mh := MetricsHandlers{Ms: metric}
+
+	mux := http.NewServeMux()
+	mux.Handle("POST /update/{mtype}/{name}/{value}", mh)
 
 	return http.ListenAndServe(`:8080`, mux)
-}
-
-func updateHandler(w http.ResponseWriter, r *http.Request) {
-	var ok bool
-
-	switch r.PathValue("mtype") {
-	case "gauge":
-		ok = updateGauge(r.PathValue("name"), r.PathValue("value"))
-	case "counter":
-		ok = updateCounter(r.PathValue("name"), r.PathValue("value"))
-	default:
-		w.WriteHeader(http.StatusBadRequest)
-	}
-
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func updateGauge(name string, mvalue string) bool {
-	_, err := strconv.ParseFloat(mvalue, 64)
-	return err == nil
-}
-
-func updateCounter(name string, mvalue string) bool {
-	_, err := strconv.ParseInt(mvalue, 10, 64)
-	return err == nil
-}
-
-type MemStorage struct {
-	Gauges   map[string]float64
-	Counters map[string]int64
-}
-
-func (ms MemStorage) AddGauge(name string, value float64) {
-
-}
-
-func (ms MemStorage) AddCounter(name string, value int64) {
-
 }
