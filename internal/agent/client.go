@@ -15,7 +15,7 @@ type MetricClient struct {
 
 func (c *MetricClient) SendUpdate(mtype string, name string, value string) error {
 
-	url := fmt.Sprint(c.Host, "/update/", mtype, "/", name, "/", value)
+	url := fmt.Sprint("http://", c.Host, "/update/", mtype, "/", name, "/", value)
 
 	client := resty.New()
 
