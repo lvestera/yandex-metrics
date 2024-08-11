@@ -1,9 +1,9 @@
 package agent
 
 import (
-	"bytes"
 	"fmt"
-	"net/http"
+
+	"github.com/go-resty/resty/v2"
 )
 
 type MClient interface {
@@ -14,12 +14,24 @@ type MetricClient struct {
 }
 
 func (c *MetricClient) SendUpdate(mtype string, name string, value string) error {
+
 	url := fmt.Sprint(c.Host, "/update/", mtype, "/", name, "/", value)
-	resp, err := http.Post(url, "text/plain", bytes.NewReader([]byte("")))
+
+	client := resty.New()
+
+	_, err := client.R().
+		SetHeader("Content-Type", "text/plain").
+		Post(url)
+
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer resp.Body.Close()
+
+	// resp, err := http.Post(url, "text/plain", bytes.NewReader([]byte("")))
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// defer resp.Body.Close()
 
 	return err
 }

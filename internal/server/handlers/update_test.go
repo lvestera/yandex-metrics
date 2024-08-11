@@ -6,18 +6,21 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	. "github.com/lvestera/yandex-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMetricsHandlers(t *testing.T) {
+func TestUpdateHandler(t *testing.T) {
 
 	type want struct {
 		statusCode  int
 		contentType string
 		allMetrics  map[string]map[string]string
 	}
+
+	emptyMap := map[string]string{}
 
 	tests := []struct {
 		name       string
@@ -34,7 +37,7 @@ func TestMetricsHandlers(t *testing.T) {
 					"gauge": map[string]string{
 						"metric": "1",
 					},
-					"counter": map[string]string{},
+					"counter": emptyMap,
 				},
 			},
 		},
@@ -45,7 +48,7 @@ func TestMetricsHandlers(t *testing.T) {
 				statusCode:  200,
 				contentType: "text/plain",
 				allMetrics: map[string]map[string]string{
-					"gauge": map[string]string{},
+					"gauge": emptyMap,
 					"counter": map[string]string{
 						"metric": "1",
 					},
@@ -59,7 +62,7 @@ func TestMetricsHandlers(t *testing.T) {
 				statusCode:  200,
 				contentType: "text/plain",
 				allMetrics: map[string]map[string]string{
-					"gauge": map[string]string{},
+					"gauge": emptyMap,
 					"counter": map[string]string{
 						"metric": "1",
 					},
@@ -73,8 +76,8 @@ func TestMetricsHandlers(t *testing.T) {
 				statusCode:  404,
 				contentType: "text/plain; charset=utf-8",
 				allMetrics: map[string]map[string]string{
-					"gauge":   map[string]string{},
-					"counter": map[string]string{},
+					"gauge":   emptyMap,
+					"counter": emptyMap,
 				},
 			},
 		},
@@ -83,10 +86,10 @@ func TestMetricsHandlers(t *testing.T) {
 			requestURL: "/update/other/metric/1",
 			want: want{
 				statusCode:  400,
-				contentType: "text/plain",
+				contentType: "text/plain; charset=utf-8",
 				allMetrics: map[string]map[string]string{
-					"gauge":   map[string]string{},
-					"counter": map[string]string{},
+					"gauge":   emptyMap,
+					"counter": emptyMap,
 				},
 			},
 		},
@@ -99,14 +102,14 @@ func TestMetricsHandlers(t *testing.T) {
 				Counters: make(map[string]int64),
 				Gauges:   make(map[string]float64),
 			}
-			mh := MetricsHandlers{
+			uh := UpdateHandler{
 				Ms: m,
 			}
 
-			mux := http.NewServeMux()
-			mux.Handle("POST /update/{mtype}/{name}/{value}", mh)
+			r := chi.NewRouter()
+			r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", uh)
 
-			ts := httptest.NewServer(mux)
+			ts := httptest.NewServer(r)
 			defer ts.Close()
 
 			result, err := ts.Client().Post(fmt.Sprintf("%v%v", ts.URL, tt.requestURL), "text/plain", nil)
@@ -116,8 +119,7 @@ func TestMetricsHandlers(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 
-			assert.Equal(t, tt.want.allMetrics, mh.Ms.GetAllMetrics())
+			assert.Equal(t, tt.want.allMetrics, uh.Ms.GetAllMetrics())
 		})
 	}
-
 }

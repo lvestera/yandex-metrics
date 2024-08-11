@@ -47,3 +47,25 @@ func (ms *MemStorage) GetAllMetrics() map[string]map[string]string {
 
 	return result
 }
+
+func (ms *MemStorage) GetMetric(mtype string, name string) (string, bool) {
+	switch mtype {
+	case "gauge":
+		val, ok := ms.Gauges[name]
+
+		if !ok {
+			return "", ok
+		}
+		return strconv.FormatFloat(val, 'f', -1, 64), ok
+	case "counter":
+		val, ok := ms.Counters[name]
+
+		if !ok {
+			return "", ok
+		}
+
+		return strconv.FormatInt(val, 10), ok
+	}
+
+	return "", false
+}

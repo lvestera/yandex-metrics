@@ -1,6 +1,10 @@
 package storage
 
 type Repository interface {
+	GetAllMetrics() map[string]map[string]string
+
+	GetMetric(mtype string, name string) (string, bool)
+
 	AddGauge(name string, value float64)
 	AddCounter(name string, value int64)
 
@@ -8,6 +12,4 @@ type Repository interface {
 
 	GetGauge(name string) (float64, bool)
 	GetCounter(name string) (int64, bool)
-
-	GetAllMetrics() map[string]map[string]string
 }
