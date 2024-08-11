@@ -21,7 +21,7 @@ const tpl = `
 	<body>
 		<h2>Gauges</h2>
 		<ul>
-		{{range $key, $value := .Gauges}}<li><{{ $key }} - {{ $value }}</li>{{else}}<div><strong>no rows</strong></div>{{end}}
+		{{range $key, $value := .Gauges}}<li>{{ $key }} - {{ $value }}</li>{{else}}<div><strong>no rows</strong></div>{{end}}
 		</ul>
 
 		<h2>Counters</h2>

@@ -5,7 +5,11 @@ import (
 )
 
 func main() {
-	server := &server.Server{}
+
+	parseFlags()
+	server := &server.Server{
+		Addr: addr,
+	}
 	if err := server.Run(); err != nil {
 		panic(err)
 	}

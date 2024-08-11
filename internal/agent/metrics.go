@@ -18,7 +18,7 @@ var MetricsName = [...]string{
 	"PauseTotalNs", "StackInuse", "StackSys", "Sys", "TotalAlloc",
 }
 
-func Update(m storage.Repository) {
+func Update(m storage.Repository, interval int) {
 
 	var rtm runtime.MemStats
 	for {
@@ -28,11 +28,11 @@ func Update(m storage.Repository) {
 		m.SetGauges(collectMetrics(rtm))
 		m.AddCounter("PollCount", 1)
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }
 
-func Send(m storage.Repository, c MClient) {
+func Send(m storage.Repository, c MClient, interval int) {
 
 	for {
 		runtime.Gosched()
@@ -46,7 +46,7 @@ func Send(m storage.Repository, c MClient) {
 			}
 		}
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }
 

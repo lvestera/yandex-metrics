@@ -9,7 +9,8 @@ import (
 )
 
 type Server struct {
-	ms storage.Repository
+	ms   storage.Repository
+	Addr string
 }
 
 func (s *Server) Run() error {
@@ -17,7 +18,7 @@ func (s *Server) Run() error {
 		Counters: make(map[string]int64),
 		Gauges:   make(map[string]float64),
 	}
-	return http.ListenAndServe(":8080", MetricRouter(s.ms))
+	return http.ListenAndServe(s.Addr, MetricRouter(s.ms))
 }
 
 func MetricRouter(metric storage.Repository) chi.Router {
