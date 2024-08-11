@@ -24,7 +24,7 @@ func TestUpdate(t *testing.T) {
 		assert.False(t, ok)
 	}
 
-	go Update(metric)
+	go Update(metric, 2)
 	time.Sleep(2 * time.Second)
 
 	pollCount = 1
@@ -70,7 +70,7 @@ func TestSend(t *testing.T) {
 	mockClient.On("SendUpdate", "gauge", "mg2", "2").Return(nil)
 	mockClient.On("SendUpdate", "counter", "mc1", "1").Return(nil)
 
-	go Send(metric, mockClient)
+	go Send(metric, mockClient, 10)
 	time.Sleep(10 * time.Second)
 
 	mockClient.AssertNumberOfCalls(t, "SendUpdate", 3)
