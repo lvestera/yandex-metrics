@@ -21,17 +21,6 @@ func (ms *MemStorage) AddCounter(name string, value int64) {
 	ms.Counters[name] += value
 }
 
-func (ms *MemStorage) GetGauge(name string) (float64, bool) {
-	val, ok := ms.Gauges[name]
-
-	return val, ok
-}
-
-func (ms *MemStorage) GetCounter(name string) (int64, bool) {
-	val, ok := ms.Counters[name]
-	return val, ok
-}
-
 func (ms *MemStorage) GetAllMetrics() map[string]map[string]string {
 	result := make(map[string]map[string]string)
 

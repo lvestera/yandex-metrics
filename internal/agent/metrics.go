@@ -64,11 +64,9 @@ func collectMetrics(rtm runtime.MemStats) map[string]float64 {
 		if f.CanFloat() {
 			metricsValue[mname] = float64(f.Float())
 		}
-
 	}
 
 	metricsValue["RandomValue"] = rand.Float64()
 
 	return metricsValue
-
 }

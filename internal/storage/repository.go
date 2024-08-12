@@ -9,7 +9,4 @@ type Repository interface {
 	AddCounter(name string, value int64)
 
 	SetGauges(gauges map[string]float64)
-
-	GetGauge(name string) (float64, bool)
-	GetCounter(name string) (int64, bool)
 }

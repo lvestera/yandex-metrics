@@ -15,32 +15,32 @@ func TestUpdate(t *testing.T) {
 		Counters: make(map[string]int64),
 		Gauges:   make(map[string]float64),
 	}
-	var pollCount int64
+	var pollCount string
 
-	_, ok := metric.GetCounter("PollCount")
+	_, ok := metric.GetMetric("counter", "PollCount")
 	assert.False(t, ok)
 	for _, name := range MetricsName {
-		_, ok := metric.GetGauge(name)
+		_, ok := metric.GetMetric("gauge", name)
 		assert.False(t, ok)
 	}
 
 	go Update(metric, 2)
 	time.Sleep(2 * time.Second)
 
-	pollCount = 1
-	val, ok := metric.GetCounter("PollCount")
+	pollCount = "1"
+	val, ok := metric.GetMetric("counter", "PollCount")
 	assert.True(t, ok)
 	assert.Equal(t, pollCount, val)
 
 	for _, name := range MetricsName {
-		_, ok := metric.GetGauge(name)
+		_, ok := metric.GetMetric("gauge", name)
 		assert.True(t, ok)
 	}
 
 	time.Sleep(2 * time.Second)
 
-	pollCount = 2
-	val, ok = metric.GetCounter("PollCount")
+	pollCount = "2"
+	val, ok = metric.GetMetric("counter", "PollCount")
 	assert.True(t, ok)
 	assert.Equal(t, pollCount, val)
 }
@@ -74,5 +74,4 @@ func TestSend(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	mockClient.AssertNumberOfCalls(t, "SendUpdate", 3)
-
 }
