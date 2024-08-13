@@ -25,7 +25,7 @@ func Update(m storage.Repository, interval int) {
 		runtime.Gosched()
 		runtime.ReadMemStats(&rtm)
 
-		m.SetGauges(collectMetrics(rtm))
+		m.SetGauges(collectMetrics(&rtm))
 		m.AddCounter("PollCount", 1)
 
 		time.Sleep(time.Duration(interval) * time.Second)
@@ -50,13 +50,13 @@ func Send(m storage.Repository, c MClient, interval int) {
 	}
 }
 
-func collectMetrics(rtm runtime.MemStats) map[string]float64 {
-	runtime.ReadMemStats(&rtm)
+func collectMetrics(rtm *runtime.MemStats) map[string]float64 {
+	runtime.ReadMemStats(rtm)
 
 	metricsValue := make(map[string]float64)
 
 	for _, mname := range MetricsName {
-		r := reflect.ValueOf(rtm)
+		r := reflect.ValueOf(*rtm)
 		f := reflect.Indirect(r).FieldByName(mname)
 		if f.CanUint() {
 			metricsValue[mname] = float64(f.Uint())

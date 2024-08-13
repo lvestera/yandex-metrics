@@ -36,7 +36,7 @@ type ViewData struct {
 	Counters map[string]string
 }
 
-func (h ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {

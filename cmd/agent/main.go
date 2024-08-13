@@ -1,13 +1,18 @@
 package main
 
 import (
+	"log"
+
 	"github.com/lvestera/yandex-metrics/internal/agent"
 	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
 func main() {
 
-	parseFlags()
+	err := parseFlags()
+	if err != nil {
+		log.Fatal(err)
+	}
 	metric := &storage.MemStorage{
 		Counters: make(map[string]int64),
 		Gauges:   make(map[string]float64),
