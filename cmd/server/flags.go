@@ -11,7 +11,7 @@ var (
 
 func parseFlags() {
 
-	flag.StringVar(&addr, "a", "localhost:8081", "Server address")
+	flag.StringVar(&addr, "a", "localhost:8080", "Server address")
 	flag.Parse()
 
 	if envAddr := os.Getenv("ADDRESS"); envAddr != "" {
