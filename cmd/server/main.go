@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/lvestera/yandex-metrics/internal/server"
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 )
 
 func main() {
@@ -11,6 +12,6 @@ func main() {
 		Addr: addr,
 	}
 	if err := server.Run(); err != nil {
-		panic(err)
+		logger.Log.Fatal("Can't start server: " + err.Error())
 	}
 }

@@ -38,6 +38,7 @@ type ViewData struct {
 
 func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 
+	w.WriteHeader(http.StatusOK)
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
