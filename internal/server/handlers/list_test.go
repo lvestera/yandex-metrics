@@ -50,7 +50,7 @@ func TestListHandler(t *testing.T) {
 			url:    "/",
 			want: want{
 				statusCode:  http.StatusOK,
-				contentType: "text/html; charset=utf-8",
+				contentType: "text/html",
 				response: []string{
 					"<!DOCTYPE html>",
 					"counter1 - 1",
