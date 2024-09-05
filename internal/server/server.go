@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/lvestera/yandex-metrics/internal/server/adapters"
+	"github.com/lvestera/yandex-metrics/internal/server/compressor"
 	"github.com/lvestera/yandex-metrics/internal/server/handlers"
 	"github.com/lvestera/yandex-metrics/internal/server/logger"
 	"github.com/lvestera/yandex-metrics/internal/storage"
@@ -28,12 +29,15 @@ func (s *Server) Run() error {
 func MetricRouter(metric storage.Repository) chi.Router {
 	r := chi.NewRouter()
 
-	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", logger.RequestLogger(handlers.UpdateHandler{Ms: metric, Format: adapters.HTTP{}}))
-	r.Method(http.MethodGet, "/value/{mtype}/{name}", logger.RequestLogger(handlers.ViewHandler{Ms: metric, Format: adapters.HTTP{}}))
-	r.Method(http.MethodGet, "/", logger.RequestLogger(handlers.ListHandler{Ms: metric}))
+	r.Use(logger.RequestLogger)
+	r.Use(compressor.RequestCompress)
 
-	r.Method(http.MethodPost, "/update/", logger.RequestLogger(handlers.UpdateHandler{Ms: metric, Format: adapters.JSON{}}))
-	r.Method(http.MethodPost, "/value/", logger.RequestLogger(handlers.ViewHandler{Ms: metric, Format: adapters.JSON{}}))
+	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", handlers.UpdateHandler{Ms: metric, Format: adapters.HTTP{}})
+	r.Method(http.MethodGet, "/value/{mtype}/{name}", handlers.ViewHandler{Ms: metric, Format: adapters.HTTP{}})
+	r.Method(http.MethodGet, "/", handlers.ListHandler{Ms: metric})
+
+	r.Method(http.MethodPost, "/update/", handlers.UpdateHandler{Ms: metric, Format: adapters.JSON{}})
+	r.Method(http.MethodPost, "/value/", handlers.ViewHandler{Ms: metric, Format: adapters.JSON{}})
 
 	return r
 }

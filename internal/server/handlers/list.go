@@ -37,7 +37,7 @@ type ViewData struct {
 }
 
 func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-
+	w.Header().Add("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {
