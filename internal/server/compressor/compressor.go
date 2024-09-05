@@ -15,7 +15,8 @@ func ResponseCompress(h http.Handler) http.Handler {
 			h.ServeHTTP(w, r)
 			return
 		}
-		if !strings.Contains(r.Header.Get("Content-Type"), "application/json") && !strings.Contains(r.Header.Get("Content-Type"), "text/html") {
+		if !strings.Contains(r.Header.Get("Content-Type"), "application/json") &&
+			!(strings.Contains(r.Header.Get("Content-Type"), "text/html") || strings.Contains(r.Header.Get("Content-Type"), "html/text")) {
 			h.ServeHTTP(w, r)
 			return
 		}
