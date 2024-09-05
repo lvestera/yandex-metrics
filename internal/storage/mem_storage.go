@@ -20,22 +20,22 @@ func NewMemStorage() *MemStorage {
 }
 
 func (ms *MemStorage) SetGauges(gauges map[string]float64) {
-	ms.rwm.RLock()
-	defer ms.rwm.RUnlock()
+	ms.rwm.Lock()
+	defer ms.rwm.Unlock()
 	for name, value := range gauges {
 		ms.Gauges[name] = value
 	}
 }
 
 func (ms *MemStorage) AddGauge(name string, value float64) {
-	ms.rwm.RLock()
-	defer ms.rwm.RUnlock()
+	ms.rwm.Lock()
+	defer ms.rwm.Unlock()
 	ms.Gauges[name] = value
 }
 
 func (ms *MemStorage) AddCounter(name string, value int64) {
-	ms.rwm.RLock()
-	defer ms.rwm.RUnlock()
+	ms.rwm.Lock()
+	defer ms.rwm.Unlock()
 	ms.Counters[name] += value
 }
 
