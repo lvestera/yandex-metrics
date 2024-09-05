@@ -42,20 +42,3 @@ func (c *MetricClient) SendUpdate(mtype string, name string, value string) error
 
 	return err
 }
-
-func (c *MetricClient) SendUpdate1(mtype string, name string, value string) error {
-
-	url := fmt.Sprint("http://", c.Host, "/update/", mtype, "/", name, "/", value)
-
-	client := resty.New()
-
-	_, err := client.R().
-		SetHeader("Content-Type", "text/plain").
-		Post(url)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return err
-}

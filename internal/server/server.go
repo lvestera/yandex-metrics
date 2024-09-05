@@ -16,13 +16,12 @@ type Server struct {
 }
 
 func (s *Server) Run() error {
-	s.ms = &storage.MemStorage{
-		Counters: make(map[string]int64),
-		Gauges:   make(map[string]float64),
-	}
+	s.ms = storage.NewMemStorage()
 	if err := logger.Initialize(); err != nil {
 		return err
 	}
+
+	logger.Log.Info("Server starts at " + s.Addr)
 	return http.ListenAndServe(s.Addr, MetricRouter(s.ms))
 }
 

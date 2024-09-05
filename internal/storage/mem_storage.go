@@ -11,6 +11,14 @@ type MemStorage struct {
 	rwm      sync.RWMutex
 }
 
+func NewMemStorage() *MemStorage {
+	ms := new(MemStorage)
+	ms.Gauges = make(map[string]float64)
+	ms.Counters = make(map[string]int64)
+
+	return ms
+}
+
 func (ms *MemStorage) SetGauges(gauges map[string]float64) {
 	ms.rwm.RLock()
 	defer ms.rwm.RUnlock()
