@@ -26,28 +26,30 @@ func (c *MetricClient) SendUpdate(mtype string, name string, value string) error
 
 	m.SetValue(value)
 
-	body, err = json.Marshal(m)
-	if err == nil {
-
-		url := fmt.Sprint("http://", c.Host, "/update/")
-		client := resty.New()
-
-		if body, err = Compress(body); err != nil {
-			logger.Log.Error(err.Error())
-			return err
-		}
-
-		_, err = client.R().
-			SetHeader("Content-Type", "application/json").
-			SetBody(body).
-			Post(url)
-
-		logger.Log.Info(fmt.Sprint("Send the", mtype, "metric", name, "to server"))
+	if body, err = json.Marshal(m); err != nil {
+		logger.Log.Error(err.Error())
+		return err
 	}
+
+	url := fmt.Sprint("http://", c.Host, "/update/")
+	client := resty.New()
+
+	if body, err = Compress(body); err != nil {
+		logger.Log.Error(err.Error())
+		return err
+	}
+
+	_, err = client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip").
+		SetBody(body).
+		Post(url)
 
 	if err != nil {
 		logger.Log.Error(err.Error())
 	}
+
+	logger.Log.Info(fmt.Sprint("Send the ", mtype, " metric ", name, " to server"))
 
 	return err
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/lvestera/yandex-metrics/internal/models"
 	"github.com/lvestera/yandex-metrics/internal/server/adapters"
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
@@ -20,6 +21,7 @@ func (uh UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", contentType)
 
 	if err != nil {
+		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest)+err.Error(), http.StatusBadRequest)
 		return
 	}
