@@ -25,7 +25,7 @@ func (c *MetricClient) SendUpdate(mtype string, name string, value string) error
 
 	body, err = json.Marshal(m)
 
-	if err != nil {
+	if err == nil {
 
 		url := fmt.Sprint("http://", c.Host, "/update/")
 		client := resty.New()
