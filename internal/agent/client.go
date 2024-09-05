@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/lvestera/yandex-metrics/internal/models"
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 )
 
 type MClient interface {
@@ -34,10 +35,12 @@ func (c *MetricClient) SendUpdate(mtype string, name string, value string) error
 			SetHeader("Content-Type", "application/json").
 			SetBody(body).
 			Post(url)
+
+		logger.Log.Info(fmt.Sprint("Send the", mtype, "metric", name, "to server"))
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logger.Log.Error(err.Error())
 	}
 
 	return err
