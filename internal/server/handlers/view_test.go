@@ -28,7 +28,7 @@ func TestViewHandler(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	router.Method(http.MethodGet, "/value/{mtype}/{name}", ViewHandler{Ms: metrics, Format: adapters.Http{}})
+	router.Method(http.MethodGet, "/value/{mtype}/{name}", ViewHandler{Ms: metrics, Format: adapters.HTTP{}})
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -132,7 +132,7 @@ func TestViewHandlerJson(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	router.Method(http.MethodPost, "/value/", ViewHandler{Ms: metrics, Format: adapters.Json{}})
+	router.Method(http.MethodPost, "/value/", ViewHandler{Ms: metrics, Format: adapters.JSON{}})
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()

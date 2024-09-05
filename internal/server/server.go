@@ -29,12 +29,12 @@ func (s *Server) Run() error {
 func MetricRouter(metric storage.Repository) chi.Router {
 	r := chi.NewRouter()
 
-	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", logger.RequestLogger(handlers.UpdateHandler{Ms: metric, Format: adapters.Http{}}))
-	r.Method(http.MethodGet, "/value/{mtype}/{name}", logger.RequestLogger(handlers.ViewHandler{Ms: metric, Format: adapters.Http{}}))
+	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", logger.RequestLogger(handlers.UpdateHandler{Ms: metric, Format: adapters.HTTP{}}))
+	r.Method(http.MethodGet, "/value/{mtype}/{name}", logger.RequestLogger(handlers.ViewHandler{Ms: metric, Format: adapters.HTTP{}}))
 	r.Method(http.MethodGet, "/", logger.RequestLogger(handlers.ListHandler{Ms: metric}))
 
-	r.Method(http.MethodPost, "/update/", logger.RequestLogger(handlers.UpdateHandler{Ms: metric, Format: adapters.Json{}}))
-	r.Method(http.MethodPost, "/value/", logger.RequestLogger(handlers.ViewHandler{Ms: metric, Format: adapters.Json{}}))
+	r.Method(http.MethodPost, "/update/", logger.RequestLogger(handlers.UpdateHandler{Ms: metric, Format: adapters.JSON{}}))
+	r.Method(http.MethodPost, "/value/", logger.RequestLogger(handlers.ViewHandler{Ms: metric, Format: adapters.JSON{}}))
 
 	return r
 }

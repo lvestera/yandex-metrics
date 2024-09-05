@@ -92,7 +92,7 @@ func TestUpdateHandler(t *testing.T) {
 			}
 			uh := UpdateHandler{
 				Ms:     m,
-				Format: adapters.Http{},
+				Format: adapters.HTTP{},
 			}
 
 			r := chi.NewRouter()
@@ -196,7 +196,7 @@ func TestUpdateHandlerJson(t *testing.T) {
 			}
 			uh := UpdateHandler{
 				Ms:     m,
-				Format: adapters.Json{},
+				Format: adapters.JSON{},
 			}
 
 			r := chi.NewRouter()

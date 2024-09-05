@@ -9,9 +9,9 @@ import (
 	"github.com/lvestera/yandex-metrics/internal/models"
 )
 
-type Json struct{}
+type JSON struct{}
 
-func (f Json) ParseUpdateRequest(r *http.Request) (models.Metric, error) {
+func (f JSON) ParseUpdateRequest(r *http.Request) (models.Metric, error) {
 	var m models.Metric
 	var buf bytes.Buffer
 
@@ -29,7 +29,7 @@ func (f Json) ParseUpdateRequest(r *http.Request) (models.Metric, error) {
 	return m, err
 }
 
-func (f Json) ParseViewRequest(r *http.Request) (models.Metric, error) {
+func (f JSON) ParseViewRequest(r *http.Request) (models.Metric, error) {
 	var m models.Metric
 	var buf bytes.Buffer
 
@@ -43,14 +43,14 @@ func (f Json) ParseViewRequest(r *http.Request) (models.Metric, error) {
 	return m, err
 }
 
-func (f Json) BuildUpdateResponseBody(m models.Metric) ([]byte, error) {
+func (f JSON) BuildUpdateResponseBody(m models.Metric) ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func (f Json) BuildViewResponseBody(m models.Metric) ([]byte, error) {
+func (f JSON) BuildViewResponseBody(m models.Metric) ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func (f Json) ContentType() string {
+func (f JSON) ContentType() string {
 	return "application/json"
 }
