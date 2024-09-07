@@ -1,22 +1,67 @@
 package storage
 
 import (
+	"encoding/json"
+	"io"
+	"os"
+	"runtime"
 	"strconv"
 	"sync"
+	"time"
+
+	"github.com/lvestera/yandex-metrics/internal/models"
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 )
 
 type MemStorage struct {
 	Gauges   map[string]float64
 	Counters map[string]int64
 	rwm      sync.RWMutex
+	filepath string
 }
 
-func NewMemStorage() *MemStorage {
+func NewMemStorage(filepath string) *MemStorage {
 	ms := new(MemStorage)
+	ms.filepath = filepath
+
+	return ms
+}
+
+func (ms *MemStorage) Init(restore bool) error {
 	ms.Gauges = make(map[string]float64)
 	ms.Counters = make(map[string]int64)
 
-	return ms
+	if restore {
+		file, err := os.OpenFile(ms.filepath, os.O_RDONLY|os.O_CREATE, 0666)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return err
+		}
+
+		if len(data) != 0 {
+			var result []models.Metric
+
+			jsonErr := json.Unmarshal(data, &result)
+			if jsonErr != nil {
+				return err
+			}
+
+			for _, elem := range result {
+				if elem.MType == "gauge" {
+					ms.AddGauge(elem.ID, *elem.Value)
+				} else {
+					ms.AddCounter(elem.ID, *elem.Delta)
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (ms *MemStorage) SetGauges(gauges map[string]float64) {
@@ -79,4 +124,44 @@ func (ms *MemStorage) GetMetric(mtype string, name string) (string, bool) {
 	}
 
 	return "", false
+}
+
+func (ms *MemStorage) toMetricArray() []models.Metric {
+	var metrics []models.Metric
+
+	for name, elem := range ms.Gauges {
+		m := models.Metric{ID: name, MType: "gauge", Value: &elem}
+		metrics = append(metrics, m)
+	}
+	for name, elem := range ms.Counters {
+		m := models.Metric{ID: name, MType: "counter", Delta: &elem}
+		metrics = append(metrics, m)
+	}
+	return metrics
+}
+
+func (ms *MemStorage) Save(interval int) error {
+	for {
+		runtime.Gosched()
+
+		data := ms.toMetricArray()
+		json_data, err := json.MarshalIndent(data, "", "    ")
+		if err != nil {
+			return err
+		}
+
+		file, err := os.OpenFile(ms.filepath, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		_, err = file.Write(json_data)
+		if err != nil {
+			return err
+		}
+
+		logger.Log.Info("Save into file")
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
 }

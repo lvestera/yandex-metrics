@@ -12,25 +12,29 @@ import (
 )
 
 type Server struct {
-	ms   storage.Repository
-	Addr string
+	Cfg *Config
 }
 
 func (s *Server) Run() error {
-	s.ms = storage.NewMemStorage()
+	ms := storage.NewMemStorage(s.Cfg.FileStoragePath)
+	if err := ms.Init(s.Cfg.Restore); err != nil {
+		return err
+	}
 	if err := logger.Initialize(); err != nil {
 		return err
 	}
 
-	logger.Log.Info("Server starts at " + s.Addr)
-	return http.ListenAndServe(s.Addr, MetricRouter(s.ms))
+	go ms.Save(s.Cfg.StorageInterval)
+
+	logger.Log.Info("Server starts at " + s.Cfg.Addr)
+	return http.ListenAndServe(s.Cfg.Addr, MetricRouter(ms))
 }
 
 func MetricRouter(metric storage.Repository) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(logger.RequestLogger)
-	r.Use(compressor.RequestCompress)
+	r.Use(compressor.ResponseCompress)
 	r.Use(compressor.ResponseCompress)
 
 	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", handlers.UpdateHandler{Ms: metric, Format: adapters.HTTP{}})
