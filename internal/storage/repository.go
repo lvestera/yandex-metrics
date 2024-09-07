@@ -1,7 +1,7 @@
 package storage
 
 type Repository interface {
-	Init(restore bool) error
+	Init(restore bool, filepath string) error
 
 	GetAllMetrics() map[string]map[string]string
 
