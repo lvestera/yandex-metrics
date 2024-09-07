@@ -152,18 +152,20 @@ func (ms *MemStorage) Save(interval int) error {
 			return err
 		}
 
-		file, err := os.OpenFile(ms.filepath, os.O_WRONLY|os.O_CREATE, 0666)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
+		if len(data) > 0 {
+			file, err := os.OpenFile(ms.filepath, os.O_WRONLY|os.O_CREATE, 0666)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
 
-		_, err = file.Write(jsonData)
-		if err != nil {
-			return err
-		}
+			_, err = file.Write(jsonData)
+			if err != nil {
+				return err
+			}
 
-		logger.Log.Info("Save into file")
+			logger.Log.Info("Save into file")
+		}
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }

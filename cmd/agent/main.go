@@ -16,6 +16,9 @@ func main() {
 		log.Fatal(err)
 	}
 	metric := storage.NewMemStorage()
+	if err := metric.Init(false, ""); err != nil {
+		log.Fatal(err)
+	}
 	if err := logger.Initialize(); err != nil {
 		log.Fatal(err)
 	}

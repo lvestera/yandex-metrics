@@ -34,7 +34,7 @@ func MetricRouter(metric storage.Repository) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(logger.RequestLogger)
-	r.Use(compressor.ResponseCompress)
+	r.Use(compressor.RequestCompress)
 	r.Use(compressor.ResponseCompress)
 
 	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", handlers.UpdateHandler{Ms: metric, Format: adapters.HTTP{}})
