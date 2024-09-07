@@ -12,6 +12,7 @@ import (
 func TestUpdate(t *testing.T) {
 
 	metric := NewMemStorage()
+	metric.Init(false, "")
 	var pollCount string
 
 	_, ok := metric.GetMetric("counter", "PollCount")
@@ -54,6 +55,7 @@ func (c *fakeClient) SendUpdate(mtype string, name string, value string) error {
 func TestSend(t *testing.T) {
 
 	metric := NewMemStorage()
+	metric.Init(false, "")
 	metric.AddGauge("mg1", 1)
 	metric.AddGauge("mg2", 2)
 	metric.AddCounter("mc1", 1)
