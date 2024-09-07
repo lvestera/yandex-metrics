@@ -20,16 +20,16 @@ type MemStorage struct {
 	filepath string
 }
 
-func NewMemStorage(filepath string) *MemStorage {
+func NewMemStorage() *MemStorage {
 	ms := new(MemStorage)
-	ms.filepath = filepath
 
 	return ms
 }
 
-func (ms *MemStorage) Init(restore bool) error {
+func (ms *MemStorage) Init(restore bool, filepath string) error {
 	ms.Gauges = make(map[string]float64)
 	ms.Counters = make(map[string]int64)
+	ms.filepath = filepath
 
 	if restore {
 		file, err := os.OpenFile(ms.filepath, os.O_RDONLY|os.O_CREATE, 0666)
@@ -129,6 +129,8 @@ func (ms *MemStorage) GetMetric(mtype string, name string) (string, bool) {
 func (ms *MemStorage) toMetricArray() []models.Metric {
 	var metrics []models.Metric
 
+	ms.rwm.RLock()
+	defer ms.rwm.RUnlock()
 	for name, elem := range ms.Gauges {
 		m := models.Metric{ID: name, MType: "gauge", Value: &elem}
 		metrics = append(metrics, m)
@@ -145,7 +147,7 @@ func (ms *MemStorage) Save(interval int) error {
 		runtime.Gosched()
 
 		data := ms.toMetricArray()
-		json_data, err := json.MarshalIndent(data, "", "    ")
+		jsonData, err := json.MarshalIndent(data, "", "    ")
 		if err != nil {
 			return err
 		}
@@ -156,7 +158,7 @@ func (ms *MemStorage) Save(interval int) error {
 		}
 		defer file.Close()
 
-		_, err = file.Write(json_data)
+		_, err = file.Write(jsonData)
 		if err != nil {
 			return err
 		}

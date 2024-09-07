@@ -16,8 +16,8 @@ type Server struct {
 }
 
 func (s *Server) Run() error {
-	ms := storage.NewMemStorage(s.Cfg.FileStoragePath)
-	if err := ms.Init(s.Cfg.Restore); err != nil {
+	ms := storage.NewMemStorage()
+	if err := ms.Init(s.Cfg.Restore, s.Cfg.FileStoragePath); err != nil {
 		return err
 	}
 	if err := logger.Initialize(); err != nil {
