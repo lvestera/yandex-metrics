@@ -39,12 +39,10 @@ func Send(m storage.Repository, c MClient, interval int) {
 	for {
 		runtime.Gosched()
 
-		for mtype, row := range m.GetAllMetrics() {
-			for name, svalue := range row {
-				err := c.SendUpdate(mtype, name, svalue)
-				if err != nil {
-					logger.Log.Info(fmt.Sprint("Sending the", mtype, "metric", name, "failed"))
-				}
+		for _, m := range m.GetMetrics() {
+			err := c.SendUpdate(m)
+			if err != nil {
+				logger.Log.Info(fmt.Sprint("Sending the", m.MType, "metric", m.ID, "failed"))
 			}
 		}
 

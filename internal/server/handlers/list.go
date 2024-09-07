@@ -45,11 +45,23 @@ func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	allmetrics := h.Ms.GetAllMetrics()
+	gauges := make(map[string]string)
+	counters := make(map[string]string)
+	var mValue string
+
+	for _, m := range h.Ms.GetMetrics() {
+		mValue, _ = m.GetValue()
+		if m.MType == "gauge" {
+			gauges[m.ID] = mValue
+		}
+		if m.MType == "counter" {
+			counters[m.ID] = mValue
+		}
+	}
 
 	data := ViewData{
-		Gauges:   allmetrics["gauge"],
-		Counters: allmetrics["counter"],
+		Gauges:   gauges,
+		Counters: counters,
 	}
 
 	err = t.Execute(w, data)

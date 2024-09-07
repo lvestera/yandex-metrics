@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/lvestera/yandex-metrics/internal/models"
 	"github.com/lvestera/yandex-metrics/internal/server/adapters"
 	. "github.com/lvestera/yandex-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -19,10 +20,11 @@ func TestUpdateHandler(t *testing.T) {
 	type want struct {
 		statusCode  int
 		contentType string
-		allMetrics  map[string]map[string]string
+		allMetrics  []models.Metric
 	}
 
-	emptyMap := map[string]string{}
+	var x float64 = 1
+	var y int64 = 1
 
 	tests := []struct {
 		name       string
@@ -35,11 +37,12 @@ func TestUpdateHandler(t *testing.T) {
 			want: want{
 				statusCode:  200,
 				contentType: "text/plain",
-				allMetrics: map[string]map[string]string{
-					"gauge": map[string]string{
-						"metric": "1",
+				allMetrics: []models.Metric{
+					{
+						ID:    "metric",
+						MType: "gauge",
+						Value: &x,
 					},
-					"counter": emptyMap,
 				},
 			},
 		},
@@ -49,10 +52,11 @@ func TestUpdateHandler(t *testing.T) {
 			want: want{
 				statusCode:  200,
 				contentType: "text/plain",
-				allMetrics: map[string]map[string]string{
-					"gauge": emptyMap,
-					"counter": map[string]string{
-						"metric": "1",
+				allMetrics: []models.Metric{
+					{
+						ID:    "metric",
+						MType: "counter",
+						Delta: &y,
 					},
 				},
 			},
@@ -63,10 +67,7 @@ func TestUpdateHandler(t *testing.T) {
 			want: want{
 				statusCode:  404,
 				contentType: "text/plain; charset=utf-8",
-				allMetrics: map[string]map[string]string{
-					"gauge":   emptyMap,
-					"counter": emptyMap,
-				},
+				allMetrics:  []models.Metric{},
 			},
 		},
 		{
@@ -75,10 +76,7 @@ func TestUpdateHandler(t *testing.T) {
 			want: want{
 				statusCode:  400,
 				contentType: "text/plain; charset=utf-8",
-				allMetrics: map[string]map[string]string{
-					"gauge":   emptyMap,
-					"counter": emptyMap,
-				},
+				allMetrics:  []models.Metric{},
 			},
 		},
 	}
@@ -86,10 +84,8 @@ func TestUpdateHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			m := &MemStorage{
-				Counters: make(map[string]int64),
-				Gauges:   make(map[string]float64),
-			}
+			m := NewMemStorage()
+			m.Init(false, "")
 			uh := UpdateHandler{
 				Ms:     m,
 				Format: adapters.HTTP{},
@@ -108,7 +104,7 @@ func TestUpdateHandler(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 
-			assert.Equal(t, tt.want.allMetrics, uh.Ms.GetAllMetrics())
+			assert.Equal(t, tt.want.allMetrics, uh.Ms.GetMetrics())
 		})
 	}
 }
@@ -118,10 +114,11 @@ func TestUpdateHandlerJson(t *testing.T) {
 	type want struct {
 		statusCode  int
 		contentType string
-		allMetrics  map[string]map[string]string
+		allMetrics  []models.Metric
 	}
 
-	emptyMap := map[string]string{}
+	var x float64 = 1
+	var y int64 = 1
 
 	tests := []struct {
 		name       string
@@ -136,11 +133,12 @@ func TestUpdateHandlerJson(t *testing.T) {
 			want: want{
 				statusCode:  200,
 				contentType: "application/json",
-				allMetrics: map[string]map[string]string{
-					"gauge": map[string]string{
-						"metric": "1",
+				allMetrics: []models.Metric{
+					{
+						ID:    "metric",
+						MType: "gauge",
+						Value: &x,
 					},
-					"counter": emptyMap,
 				},
 			},
 		},
@@ -151,10 +149,11 @@ func TestUpdateHandlerJson(t *testing.T) {
 			want: want{
 				statusCode:  200,
 				contentType: "application/json",
-				allMetrics: map[string]map[string]string{
-					"gauge": emptyMap,
-					"counter": map[string]string{
-						"metric": "1",
+				allMetrics: []models.Metric{
+					{
+						ID:    "metric",
+						MType: "counter",
+						Delta: &y,
 					},
 				},
 			},
@@ -166,10 +165,7 @@ func TestUpdateHandlerJson(t *testing.T) {
 			want: want{
 				statusCode:  400,
 				contentType: "text/plain; charset=utf-8",
-				allMetrics: map[string]map[string]string{
-					"gauge":   emptyMap,
-					"counter": emptyMap,
-				},
+				allMetrics:  []models.Metric{},
 			},
 		},
 		{
@@ -179,10 +175,7 @@ func TestUpdateHandlerJson(t *testing.T) {
 			want: want{
 				statusCode:  400,
 				contentType: "text/plain; charset=utf-8",
-				allMetrics: map[string]map[string]string{
-					"gauge":   emptyMap,
-					"counter": emptyMap,
-				},
+				allMetrics:  []models.Metric{},
 			},
 		},
 	}
@@ -212,7 +205,7 @@ func TestUpdateHandlerJson(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 
-			assert.Equal(t, tt.want.allMetrics, uh.Ms.GetAllMetrics())
+			assert.Equal(t, tt.want.allMetrics, uh.Ms.GetMetrics())
 		})
 	}
 }

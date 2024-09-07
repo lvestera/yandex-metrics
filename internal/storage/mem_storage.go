@@ -84,24 +84,6 @@ func (ms *MemStorage) AddCounter(name string, value int64) {
 	ms.Counters[name] += value
 }
 
-func (ms *MemStorage) GetAllMetrics() map[string]map[string]string {
-	ms.rwm.RLock()
-	defer ms.rwm.RUnlock()
-	result := make(map[string]map[string]string)
-
-	result["gauge"] = make(map[string]string)
-	result["counter"] = make(map[string]string)
-	for name, val := range ms.Gauges {
-		result["gauge"][name] = strconv.FormatFloat(val, 'f', -1, 64)
-	}
-
-	for name, val := range ms.Counters {
-		result["counter"][name] = strconv.FormatInt(val, 10)
-	}
-
-	return result
-}
-
 func (ms *MemStorage) GetMetric(mtype string, name string) (string, bool) {
 	ms.rwm.RLock()
 	defer ms.rwm.RUnlock()
@@ -126,8 +108,8 @@ func (ms *MemStorage) GetMetric(mtype string, name string) (string, bool) {
 	return "", false
 }
 
-func (ms *MemStorage) toMetricArray() []models.Metric {
-	var metrics []models.Metric
+func (ms *MemStorage) GetMetrics() []models.Metric {
+	metrics := []models.Metric{}
 
 	ms.rwm.RLock()
 	defer ms.rwm.RUnlock()
@@ -146,7 +128,7 @@ func (ms *MemStorage) Save(interval int) error {
 	for {
 		runtime.Gosched()
 
-		data := ms.toMetricArray()
+		data := ms.GetMetrics()
 		jsonData, err := json.MarshalIndent(data, "", "    ")
 		if err != nil {
 			return err

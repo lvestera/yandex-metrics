@@ -15,16 +15,14 @@ import (
 
 func TestListHandler(t *testing.T) {
 
-	metrics := &storage.MemStorage{
-		Counters: map[string]int64{
-			"counter1": 1,
-			"counter2": 2,
-		},
-		Gauges: map[string]float64{
-			"gauge1": 1.1,
-			"gauge2": 3,
-		},
-	}
+	metrics := storage.NewMemStorage()
+	metrics.Init(false, "")
+
+	metrics.AddCounter("counter1", 1)
+	metrics.AddCounter("counter2", 2)
+
+	metrics.AddGauge("gauge1", 1.1)
+	metrics.AddGauge("gauge2", 3)
 
 	router := chi.NewRouter()
 	router.Method(http.MethodGet, "/", ListHandler{Ms: metrics})

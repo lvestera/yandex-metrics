@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lvestera/yandex-metrics/internal/models"
 	. "github.com/lvestera/yandex-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -47,8 +48,8 @@ type fakeClient struct {
 	mock.Mock
 }
 
-func (c *fakeClient) SendUpdate(mtype string, name string, value string) error {
-	c.Called(mtype, name, value)
+func (c *fakeClient) SendUpdate(m models.Metric) error {
+	c.Called(m)
 	return nil
 }
 
@@ -62,9 +63,15 @@ func TestSend(t *testing.T) {
 
 	var mockClient = &fakeClient{}
 
-	mockClient.On("SendUpdate", "gauge", "mg1", "1").Return(nil)
-	mockClient.On("SendUpdate", "gauge", "mg2", "2").Return(nil)
-	mockClient.On("SendUpdate", "counter", "mc1", "1").Return(nil)
+	var x1, x2 float64 = 1, 2
+	var y int64 = 1
+	gaugeMetric1 := models.Metric{ID: "mg1", MType: "gauge", Value: &x1}
+	gaugeMetric2 := models.Metric{ID: "mg2", MType: "gauge", Value: &x2}
+	counterMetric1 := models.Metric{ID: "mc1", MType: "counter", Delta: &y}
+
+	mockClient.On("SendUpdate", gaugeMetric1).Return(nil)
+	mockClient.On("SendUpdate", gaugeMetric2).Return(nil)
+	mockClient.On("SendUpdate", counterMetric1).Return(nil)
 
 	go Send(metric, mockClient, 10)
 	time.Sleep(15 * time.Second)
