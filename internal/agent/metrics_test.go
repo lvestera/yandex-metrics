@@ -67,7 +67,7 @@ func TestSend(t *testing.T) {
 	mockClient.On("SendUpdate", "counter", "mc1", "1").Return(nil)
 
 	go Send(metric, mockClient, 10)
-	time.Sleep(10 * time.Second)
+	time.Sleep(9 * time.Second)
 
 	mockClient.AssertNumberOfCalls(t, "SendUpdate", 3)
 }
