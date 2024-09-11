@@ -50,7 +50,10 @@ func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	var mValue string
 
 	for _, m := range h.Ms.GetMetrics() {
-		mValue, _ = m.GetValue()
+		mValue, err = m.GetValue()
+		if err != nil {
+			continue
+		}
 		if m.MType == "gauge" {
 			gauges[m.ID] = mValue
 		}

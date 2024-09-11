@@ -31,7 +31,11 @@ func (mh ViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m.SetValue(value)
+	err = m.SetValue(value)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest)+err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	responseBody, err := mh.Format.BuildViewResponseBody(m)
 	if err != nil {

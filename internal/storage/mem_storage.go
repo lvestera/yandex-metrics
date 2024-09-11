@@ -135,14 +135,29 @@ func (ms *MemStorage) Save(interval int) error {
 		}
 
 		if len(data) > 0 {
-			file, err := os.OpenFile(ms.filepath, os.O_WRONLY|os.O_CREATE, 0666)
-			if err != nil {
-				return err
-			}
-			defer file.Close()
+			err := func() error {
+				file, err := os.OpenFile(ms.filepath, os.O_WRONLY|os.O_CREATE, 0666)
+				if err != nil {
+					return err
+				}
+				defer file.Close()
 
-			_, err = file.Write(jsonData)
+				_, err = file.Write(jsonData)
+				if err != nil {
+					return err
+				}
+				return nil
+			}()
+
+			// file, err := os.OpenFile(ms.filepath, os.O_WRONLY|os.O_CREATE, 0666)
+			// if err != nil {
+			// 	return err
+			// }
+			// defer file.Close()
+
+			// _, err = file.Write(jsonData)
 			if err != nil {
+				logger.Log.Info("Can't save into file")
 				return err
 			}
 
