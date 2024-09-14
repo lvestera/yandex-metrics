@@ -1,16 +1,22 @@
 package main
 
 import (
+	"log"
+
 	"github.com/lvestera/yandex-metrics/internal/server"
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 )
 
 func main() {
 
-	parseFlags()
+	cfg, err := server.NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 	server := &server.Server{
-		Addr: addr,
+		Cfg: cfg,
 	}
 	if err := server.Run(); err != nil {
-		panic(err)
+		logger.Log.Fatal("Can't start server: " + err.Error())
 	}
 }

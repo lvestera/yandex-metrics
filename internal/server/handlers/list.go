@@ -37,18 +37,34 @@ type ViewData struct {
 }
 
 func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-
+	w.Header().Add("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	allmetrics := h.Ms.GetAllMetrics()
+	gauges := make(map[string]string)
+	counters := make(map[string]string)
+	var mValue string
+
+	for _, m := range h.Ms.GetMetrics() {
+		mValue, err = m.GetValue()
+		if err != nil {
+			continue
+		}
+		if m.MType == "gauge" {
+			gauges[m.ID] = mValue
+		}
+		if m.MType == "counter" {
+			counters[m.ID] = mValue
+		}
+	}
 
 	data := ViewData{
-		Gauges:   allmetrics["gauge"],
-		Counters: allmetrics["counter"],
+		Gauges:   gauges,
+		Counters: counters,
 	}
 
 	err = t.Execute(w, data)

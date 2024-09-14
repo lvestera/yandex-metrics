@@ -1,11 +1,13 @@
 package agent
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"reflect"
 	"runtime"
 	"time"
 
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
@@ -37,12 +39,10 @@ func Send(m storage.Repository, c MClient, interval int) {
 	for {
 		runtime.Gosched()
 
-		for mtype, row := range m.GetAllMetrics() {
-			for name, svalue := range row {
-				err := c.SendUpdate(mtype, name, svalue)
-				if err != nil {
-					return
-				}
+		for _, m := range m.GetMetrics() {
+			err := c.SendUpdate(m)
+			if err != nil {
+				logger.Log.Info(fmt.Sprint("Sending the", m.MType, "metric", m.ID, "failed"))
 			}
 		}
 

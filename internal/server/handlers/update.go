@@ -2,54 +2,61 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/lvestera/yandex-metrics/internal/models"
+	"github.com/lvestera/yandex-metrics/internal/server/adapters"
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
 type UpdateHandler struct {
-	Ms storage.Repository
+	Ms     storage.Repository
+	Format adapters.Format
 }
 
 func (uh UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var ok bool
+	m, err := uh.Format.ParseUpdateRequest(r)
+	contentType := uh.Format.ContentType()
 
-	mType := chi.URLParam(r, "mtype")
-	mName := chi.URLParam(r, "name")
-	mValue := chi.URLParam(r, "value")
+	w.Header().Add("Content-Type", contentType)
 
-	w.Header().Add("Content-Type", "text/plain")
+	if err != nil {
+		logger.Log.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest)+err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	switch mType {
+	switch m.MType {
 	case "gauge":
-		ok = uh.updateGauge(mName, mValue)
+		uh.updateGauge(m)
 	case "counter":
-		ok = uh.updateCounter(mName, mValue)
+		uh.updateCounter(m)
 	default:
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
+	value, ok := uh.Ms.GetMetric(m.MType, m.ID)
 	if !ok {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+	m.SetValue(value)
+
+	responseBody, err := uh.Format.BuildUpdateResponseBody(m)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest)+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
+	w.Write(responseBody)
 }
 
-func (uh UpdateHandler) updateGauge(name string, mvalue string) bool {
-	value, err := strconv.ParseFloat(mvalue, 64)
-
-	uh.Ms.AddGauge(name, value)
-
-	return err == nil
+func (uh UpdateHandler) updateGauge(m models.Metric) {
+	uh.Ms.AddGauge(m.ID, *m.Value)
 }
 
-func (uh UpdateHandler) updateCounter(name string, mvalue string) bool {
-	value, err := strconv.ParseInt(mvalue, 10, 64)
-
-	uh.Ms.AddCounter(name, value)
-	return err == nil
+func (uh UpdateHandler) updateCounter(m models.Metric) {
+	uh.Ms.AddCounter(m.ID, *m.Delta)
 }

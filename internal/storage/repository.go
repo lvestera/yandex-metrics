@@ -1,7 +1,11 @@
 package storage
 
+import "github.com/lvestera/yandex-metrics/internal/models"
+
 type Repository interface {
-	GetAllMetrics() map[string]map[string]string
+	Init(restore bool, filepath string) error
+
+	GetMetrics() []models.Metric
 
 	GetMetric(mtype string, name string) (string, bool)
 
