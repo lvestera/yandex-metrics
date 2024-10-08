@@ -1,9 +1,24 @@
 package handlers
 
-import "net/http"
+import (
+	"context"
+	"database/sql"
+	"net/http"
+	"time"
+)
 
-type PingHandler struct{}
+type PingHandler struct {
+	Db *sql.DB
+}
 
-func (mh PingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+func (ph PingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	if err := ph.Db.PingContext(ctx); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 }
