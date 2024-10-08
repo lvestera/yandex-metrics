@@ -56,7 +56,7 @@ func MetricRouter(metric storage.Repository, db *sql.DB) chi.Router {
 
 	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", handlers.UpdateHandler{Ms: metric, Format: adapters.HTTP{}})
 	r.Method(http.MethodGet, "/value/{mtype}/{name}", handlers.ViewHandler{Ms: metric, Format: adapters.HTTP{}})
-	r.Method(http.MethodGet, "/ping", handlers.PingHandler{Db: db})
+	r.Method(http.MethodGet, "/ping", handlers.PingHandler{DB: db})
 	r.Method(http.MethodGet, "/", handlers.ListHandler{Ms: metric})
 
 	r.Method(http.MethodPost, "/update/", handlers.UpdateHandler{Ms: metric, Format: adapters.JSON{}})
