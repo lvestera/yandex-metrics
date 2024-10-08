@@ -13,6 +13,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	server := &server.Server{
 		Cfg: cfg,
 	}
