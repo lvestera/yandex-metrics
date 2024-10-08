@@ -28,7 +28,7 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	db, err := sql.Open("pgx", s.Cfg.DbConfig)
+	db, err := sql.Open("pgx", s.Cfg.DBConfig)
 	if err != nil {
 		panic(err)
 	}
