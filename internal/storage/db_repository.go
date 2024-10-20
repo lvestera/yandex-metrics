@@ -48,12 +48,12 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	err = rows.Err()
-	if err != nil {
-		logger.Log.Error(err.Error())
-		return nil, err
+	} else {
+		err = rows.Err()
+		if err != nil {
+			logger.Log.Error(err.Error())
+			return nil, err
+		}
 	}
 
 	return rep, nil
