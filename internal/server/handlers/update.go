@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/lvestera/yandex-metrics/internal/models"
 	"github.com/lvestera/yandex-metrics/internal/server/adapters"
 	"github.com/lvestera/yandex-metrics/internal/server/logger"
 	"github.com/lvestera/yandex-metrics/internal/storage"
@@ -22,26 +21,29 @@ func (uh UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Log.Error(err.Error())
-		http.Error(w, http.StatusText(http.StatusBadRequest)+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	switch m.MType {
-	case "gauge":
-		uh.updateGauge(m)
-	case "counter":
-		uh.updateCounter(m)
-	default:
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	value, ok := uh.Ms.GetMetric(m.MType, m.ID)
-	if !ok {
+	_, err = uh.Ms.AddMetric(m)
+	if err != nil {
+		logger.Log.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	m, err = uh.Ms.GetMetric(m.MType, m.ID)
+	if err != nil {
+		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	m.SetValue(value)
+	// value, ok := uh.Ms.GetMetric(m.MType, m.ID)
+	// if !ok {
+	// 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	// 	return
+	// }
+	// m.SetValue(value)
 
 	responseBody, err := uh.Format.BuildUpdateResponseBody(m)
 	if err != nil {
@@ -51,12 +53,4 @@ func (uh UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(responseBody)
-}
-
-func (uh UpdateHandler) updateGauge(m models.Metric) {
-	uh.Ms.AddGauge(m.ID, *m.Value)
-}
-
-func (uh UpdateHandler) updateCounter(m models.Metric) {
-	uh.Ms.AddCounter(m.ID, *m.Delta)
 }

@@ -12,36 +12,45 @@ import (
 
 func TestUpdate(t *testing.T) {
 
-	metric := NewMemStorage()
-	metric.Init(false, "")
-	var pollCount string
+	metric, _ := NewMemStorage(false, "")
+	var pollCount int64
 
-	_, ok := metric.GetMetric("counter", "PollCount")
-	assert.False(t, ok)
+	_, err := metric.GetMetric("counter", "PollCount")
+	assert.NotNil(t, err)
 	for _, name := range MetricsName {
-		_, ok := metric.GetMetric("gauge", name)
-		assert.False(t, ok)
+		_, err := metric.GetMetric("gauge", name)
+		assert.NotNil(t, err)
 	}
 
 	go Update(metric, 2)
 	time.Sleep(2 * time.Second)
 
-	pollCount = "1"
-	val, ok := metric.GetMetric("counter", "PollCount")
-	assert.True(t, ok)
-	assert.Equal(t, pollCount, val)
+	pollCount = 1
+	pollMetric := models.Metric{
+		ID:    "PollCount",
+		MType: "counter",
+		Delta: &pollCount,
+	}
+	val, err := metric.GetMetric("counter", "PollCount")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, pollMetric, val)
 
 	for _, name := range MetricsName {
-		_, ok := metric.GetMetric("gauge", name)
-		assert.True(t, ok)
+		_, err := metric.GetMetric("gauge", name)
+		assert.Equal(t, nil, err)
 	}
 
 	time.Sleep(2 * time.Second)
 
-	pollCount = "2"
-	val, ok = metric.GetMetric("counter", "PollCount")
-	assert.True(t, ok)
-	assert.Equal(t, pollCount, val)
+	pollCount = 2
+	pollMetric = models.Metric{
+		ID:    "PollCount",
+		MType: "counter",
+		Delta: &pollCount,
+	}
+	val, err = metric.GetMetric("counter", "PollCount")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, pollMetric, val)
 }
 
 type fakeClient struct {
@@ -55,8 +64,8 @@ func (c *fakeClient) SendUpdate(m models.Metric) error {
 
 func TestSend(t *testing.T) {
 
-	metric := NewMemStorage()
-	metric.Init(false, "")
+	metric, _ := NewMemStorage(false, "")
+
 	metric.AddGauge("mg1", 1)
 	metric.AddGauge("mg2", 2)
 	metric.AddCounter("mc1", 1)

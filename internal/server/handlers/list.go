@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
@@ -41,6 +42,7 @@ func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {
+		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -49,7 +51,13 @@ func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	counters := make(map[string]string)
 	var mValue string
 
-	for _, m := range h.Ms.GetMetrics() {
+	metrics, err := h.Ms.GetMetrics()
+	if err != nil {
+		logger.Log.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+	for _, m := range metrics {
 		mValue, err = m.GetValue()
 		if err != nil {
 			continue
@@ -69,6 +77,7 @@ func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 
 	err = t.Execute(w, data)
 	if err != nil {
+		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
