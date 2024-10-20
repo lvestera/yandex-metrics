@@ -34,8 +34,8 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 	logger.Log.Info("DB string " + configStr)
 
 	//проверить есть ли таблица
-	_, table_check := db.Query("select 1 from metrics;")
-	if table_check != nil {
+	rows, tableCheck := db.Query("select 1 from metrics;")
+	if tableCheck != nil {
 		//создать таблицу
 		// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		// defer cancel()
@@ -48,6 +48,11 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
 	}
 
 	return rep, nil
@@ -73,6 +78,11 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 	for rows.Next() {
 		rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
 		metrics = append(metrics, m)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
 	}
 
 	return metrics, nil
@@ -109,14 +119,14 @@ func (rep *DBRepository) AddMetric(m models.Metric) (bool, error) {
 	return true, nil
 }
 
-func (dbr *DBRepository) SetGauges(gauges map[string]float64) {
+func (rep *DBRepository) SetGauges(gauges map[string]float64) {
 
 }
 
-func (dbr *DBRepository) Save(interval int) error {
+func (rep *DBRepository) Save(interval int) error {
 	return nil
 }
 
-func (dbr *DBRepository) Ping() error {
-	return dbr.DB.PingContext(context.Background())
+func (rep *DBRepository) Ping() error {
+	return rep.DB.PingContext(context.Background())
 }

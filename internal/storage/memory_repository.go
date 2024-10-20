@@ -93,7 +93,7 @@ func (ms *MemStorage) AddMetric(m models.Metric) (bool, error) {
 		ms.AddCounter(m.ID, *m.Delta)
 		return true, nil
 	default:
-		return false, errors.New("Incorrect metric type")
+		return false, errors.New("incorrect metric type")
 	}
 }
 
@@ -105,7 +105,7 @@ func (ms *MemStorage) GetMetric(mtype string, name string) (m models.Metric, err
 	case "gauge":
 		val, ok := ms.Gauges[name]
 		if !ok {
-			return m, errors.New("Not found")
+			return m, errors.New("not found")
 		}
 
 		m.Value = &val
@@ -113,13 +113,13 @@ func (ms *MemStorage) GetMetric(mtype string, name string) (m models.Metric, err
 	case "counter":
 		val, ok := ms.Counters[name]
 		if !ok {
-			return m, errors.New("Not found")
+			return m, errors.New("not found")
 		}
 
 		m.Delta = &val
 		return m, nil
 	default:
-		return m, errors.New("Incorrect metric type")
+		return m, errors.New("incorrect metric type")
 	}
 }
 
