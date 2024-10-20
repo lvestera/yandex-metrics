@@ -52,6 +52,7 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 
 	err = rows.Err()
 	if err != nil {
+		logger.Log.Error(err.Error())
 		return nil, err
 	}
 
