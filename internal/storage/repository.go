@@ -3,14 +3,12 @@ package storage
 import "github.com/lvestera/yandex-metrics/internal/models"
 
 type Repository interface {
-	Init(restore bool, filepath string) error
+	GetMetrics() ([]models.Metric, error)
+	GetMetric(mtype string, name string) (models.Metric, error)
 
-	GetMetrics() []models.Metric
-
-	GetMetric(mtype string, name string) (string, bool)
-
-	AddGauge(name string, value float64)
-	AddCounter(name string, value int64)
+	AddMetric(m models.Metric) (bool, error)
 
 	SetGauges(gauges map[string]float64)
+
+	Save(interval int) error
 }

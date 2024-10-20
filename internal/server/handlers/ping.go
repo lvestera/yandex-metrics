@@ -1,21 +1,24 @@
 package handlers
 
 import (
-	"context"
-	"database/sql"
 	"net/http"
-	"time"
+
+	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
 type PingHandler struct {
-	DB *sql.DB
+	Ms storage.Repository
 }
 
 func (ph PingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	if err := ph.DB.PingContext(ctx); err != nil {
+	ping, ok := (ph.Ms).(storage.Ping)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := ping.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 	} else {
