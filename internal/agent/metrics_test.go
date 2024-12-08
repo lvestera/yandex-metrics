@@ -7,7 +7,6 @@ import (
 	"github.com/lvestera/yandex-metrics/internal/models"
 	. "github.com/lvestera/yandex-metrics/internal/storage"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestUpdate(t *testing.T) {
@@ -51,18 +50,4 @@ func TestUpdate(t *testing.T) {
 	val, err = metric.GetMetric("counter", "PollCount")
 	assert.Equal(t, nil, err)
 	assert.Equal(t, pollMetric, val)
-}
-
-type fakeClient struct {
-	mock.Mock
-}
-
-func (c *fakeClient) SendBatchUpdate(metrics []models.Metric) error {
-	c.Called(metrics)
-	return nil
-}
-
-func (c *fakeClient) SendUpdate(m models.Metric) error {
-	c.Called(m)
-	return nil
 }
