@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -15,6 +16,10 @@ func (f HTTP) ParseUpdateRequest(r *http.Request) (models.Metric, error) {
 	err := m.SetValue(chi.URLParam(r, "value"))
 
 	return m, err
+}
+
+func (f HTTP) ParseUpdateBatchRequest(r *http.Request) ([]models.Metric, error) {
+	return nil, errors.New("unsupported request method")
 }
 
 func (f HTTP) ParseViewRequest(r *http.Request) (models.Metric, error) {

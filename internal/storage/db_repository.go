@@ -105,13 +105,45 @@ func (rep *DBRepository) GetMetric(mtype string, name string) (m models.Metric, 
 	return m, nil
 }
 
+func (rep *DBRepository) AddMetrics(metrics []models.Metric) (int, error) {
+	rep.rwm.Lock()
+	defer rep.rwm.Unlock()
+
+	tx, err := rep.DB.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(
+		context.Background(),
+		"INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) "+
+			"ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4")
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	count := 0
+	for _, m := range metrics {
+		_, err := stmt.ExecContext(context.Background(), m.ID, m.MType, m.Delta, m.Value)
+		if err != nil {
+			return count, err
+		}
+		count = count + 1
+
+	}
+	return count, tx.Commit()
+}
+
 func (rep *DBRepository) AddMetric(m models.Metric) (bool, error) {
 	rep.rwm.Lock()
 	defer rep.rwm.Unlock()
 
 	_, err := rep.DB.ExecContext(
 		context.Background(),
-		"INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4", m.ID, m.MType, m.Delta, m.Value,
+		"INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4",
+		m.ID, m.MType, m.Delta, m.Value,
 	)
 	if err != nil {
 		return false, err

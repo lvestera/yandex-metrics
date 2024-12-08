@@ -13,6 +13,7 @@ import (
 
 type MClient interface {
 	SendUpdate(m models.Metric) error
+	SendBatchUpdate(metrics []models.Metric) error
 }
 type MetricClient struct {
 	Host string
@@ -47,6 +48,38 @@ func (c *MetricClient) SendUpdate(m models.Metric) error {
 	}
 
 	logger.Log.Info(fmt.Sprint("Send the ", m.MType, " metric ", m.ID, " to server"))
+
+	return err
+}
+
+func (c *MetricClient) SendBatchUpdate(metrics []models.Metric) error {
+	var err error
+	var body []byte
+
+	if body, err = json.Marshal(metrics); err != nil {
+		logger.Log.Error(err.Error())
+		return err
+	}
+
+	url := fmt.Sprint("http://", c.Host, "/updates/")
+	client := resty.New()
+
+	if body, err = Compress(body); err != nil {
+		logger.Log.Error(err.Error())
+		return err
+	}
+
+	_, err = client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip").
+		SetBody(body).
+		Post(url)
+
+	if err != nil {
+		logger.Log.Error(err.Error())
+	}
+
+	logger.Log.Info(fmt.Sprint("Send ", len(metrics), " metrics to server"))
 
 	return err
 }

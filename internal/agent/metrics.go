@@ -51,12 +51,18 @@ func Send(m storage.Repository, c MClient, interval int) {
 		if err != nil {
 			logger.Log.Info("Get metrics failed")
 		}
-		for _, m := range metrics {
-			err := c.SendUpdate(m)
-			if err != nil {
-				logger.Log.Info(fmt.Sprint("Sending the", m.MType, "metric", m.ID, "failed"))
-			}
+
+		err = c.SendBatchUpdate(metrics)
+		if err != nil {
+			logger.Log.Info(fmt.Sprint("Sending the batch of ", len(metrics), "metrics failed"))
 		}
+
+		// for _, m := range metrics {
+		// 	err := c.SendUpdate(m)
+		// 	if err != nil {
+		// 		logger.Log.Info(fmt.Sprint("Sending the", m.MType, "metric", m.ID, "failed"))
+		// 	}
+		// }
 
 		time.Sleep(time.Duration(interval) * time.Second)
 	}

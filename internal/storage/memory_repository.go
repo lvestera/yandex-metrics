@@ -84,6 +84,27 @@ func (ms *MemStorage) AddCounter(name string, value int64) {
 	ms.Counters[name] += value
 }
 
+func (ms *MemStorage) AddMetrics(metrics []models.Metric) (int, error) {
+	ms.rwm.Lock()
+	defer ms.rwm.Unlock()
+
+	count := 0
+
+	for _, m := range metrics {
+		ok, err := ms.AddMetric(m)
+
+		if ok {
+			count = count + 1
+		}
+
+		if err != nil {
+			return count, err
+		}
+	}
+
+	return count, nil
+}
+
 func (ms *MemStorage) AddMetric(m models.Metric) (bool, error) {
 	switch m.MType {
 	case "gauge":
