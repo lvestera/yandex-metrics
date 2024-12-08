@@ -25,32 +25,12 @@ func (uh UpdateBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = uh.Ms.AddMetric(m)
+	_, err = uh.Ms.AddMetrics(metrics)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	m, err = uh.Ms.GetMetric(m.MType, m.ID)
-	if err != nil {
-		logger.Log.Error(err.Error())
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-	// value, ok := uh.Ms.GetMetric(m.MType, m.ID)
-	// if !ok {
-	// 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-	// 	return
-	// }
-	// m.SetValue(value)
-
-	responseBody, err := uh.Format.BuildUpdateResponseBody(m)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest)+err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
-	w.Write(responseBody)
 }

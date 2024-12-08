@@ -57,6 +57,11 @@ type fakeClient struct {
 	mock.Mock
 }
 
+func (c *fakeClient) SendBatchUpdate(metrics []models.Metric) error {
+	c.Called(metrics)
+	return nil
+}
+
 func (c *fakeClient) SendUpdate(m models.Metric) error {
 	c.Called(m)
 	return nil
