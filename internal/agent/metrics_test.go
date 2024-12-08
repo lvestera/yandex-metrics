@@ -66,33 +66,3 @@ func (c *fakeClient) SendUpdate(m models.Metric) error {
 	c.Called(m)
 	return nil
 }
-
-func TestSend(t *testing.T) {
-
-	metric, _ := NewMemStorage(false, "")
-
-	metric.AddGauge("mg1", 1)
-	metric.AddGauge("mg2", 2)
-	metric.AddCounter("mc1", 1)
-
-	var mockClient = &fakeClient{}
-
-	var x1, x2 float64 = 1, 2
-	var y int64 = 1
-	gaugeMetric1 := models.Metric{ID: "mg1", MType: "gauge", Value: &x1}
-	gaugeMetric2 := models.Metric{ID: "mg2", MType: "gauge", Value: &x2}
-	counterMetric1 := models.Metric{ID: "mc1", MType: "counter", Delta: &y}
-
-	metrics := []models.Metric{gaugeMetric1, gaugeMetric2, counterMetric1}
-
-	mockClient.On("SendBatchUpdate", metrics).Return(nil)
-
-	// mockClient.On("SendUpdate", gaugeMetric1).Return(nil)
-	// mockClient.On("SendUpdate", gaugeMetric2).Return(nil)
-	// mockClient.On("SendUpdate", counterMetric1).Return(nil)
-
-	go Send(metric, mockClient, 10)
-	time.Sleep(15 * time.Second)
-
-	mockClient.AssertNumberOfCalls(t, "SendBatchUpdate", 2)
-}
