@@ -83,12 +83,16 @@ func TestSend(t *testing.T) {
 	gaugeMetric2 := models.Metric{ID: "mg2", MType: "gauge", Value: &x2}
 	counterMetric1 := models.Metric{ID: "mc1", MType: "counter", Delta: &y}
 
-	mockClient.On("SendUpdate", gaugeMetric1).Return(nil)
-	mockClient.On("SendUpdate", gaugeMetric2).Return(nil)
-	mockClient.On("SendUpdate", counterMetric1).Return(nil)
+	metrics := []models.Metric{gaugeMetric1, gaugeMetric2, counterMetric1}
+
+	mockClient.On("SendBatchUpdate", metrics).Return(nil)
+
+	// mockClient.On("SendUpdate", gaugeMetric1).Return(nil)
+	// mockClient.On("SendUpdate", gaugeMetric2).Return(nil)
+	// mockClient.On("SendUpdate", counterMetric1).Return(nil)
 
 	go Send(metric, mockClient, 10)
 	time.Sleep(15 * time.Second)
 
-	mockClient.AssertNumberOfCalls(t, "SendUpdate", 6)
+	mockClient.AssertNumberOfCalls(t, "SendBatchUpdate", 2)
 }
