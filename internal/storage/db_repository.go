@@ -78,8 +78,6 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 			"SELECT * FROM metrics",
 		)
 
-		defer rows.Close()
-
 		if err != nil {
 			logger.Log.Error(fmt.Sprint("Error while reading from db (", i, " attempt): ", err.Error()))
 
@@ -98,6 +96,8 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 
 			return metrics, nil
 		}
+
+		defer rows.Close()
 
 		delay += 2
 	}
