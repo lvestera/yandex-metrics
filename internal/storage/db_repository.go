@@ -3,11 +3,17 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"sync"
+	"time"
 
 	"github.com/lvestera/yandex-metrics/internal/models"
 	"github.com/lvestera/yandex-metrics/internal/server/logger"
 )
+
+const maxRetries = 3
+const defaultDelay = 1
 
 type DBRepository struct {
 	DB  *sql.DB
@@ -64,44 +70,65 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 
 	metrics := make([]models.Metric, 0)
 
-	rows, err := rep.DB.QueryContext(context.Background(),
-		"SELECT * FROM metrics",
-	)
-	if err != nil {
-		return metrics, err
+	delay := defaultDelay
+	for i := 0; i < maxRetries; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(delay)*time.Second)
+		defer cancel()
+		rows, err := rep.DB.QueryContext(ctx,
+			"SELECT * FROM metrics",
+		)
+
+		defer rows.Close()
+
+		if err != nil {
+			logger.Log.Error(fmt.Sprint("Error while reading from db (", i, " attempt): ", err.Error()))
+
+		} else {
+			var m models.Metric
+
+			for rows.Next() {
+				rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
+				metrics = append(metrics, m)
+			}
+
+			err = rows.Err()
+			if err != nil {
+				return nil, err
+			}
+
+			return metrics, nil
+		}
+
+		delay += 2
 	}
 
-	defer rows.Close()
-
-	var m models.Metric
-
-	for rows.Next() {
-		rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
-		metrics = append(metrics, m)
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return metrics, nil
+	return metrics, errors.New(fmt.Sprint("error while reading from database after ", maxRetries, " attempts"))
 }
 
 func (rep *DBRepository) GetMetric(mtype string, name string) (m models.Metric, err error) {
 	rep.rwm.Lock()
 	defer rep.rwm.Unlock()
 
-	//var m models.Metric
-	err = rep.DB.QueryRowContext(
-		context.Background(),
-		"SELECT * FROM metrics WHERE ID=$1 AND TYPE=$2", name, mtype,
-	).Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
-	if err != nil {
-		return m, err
+	delay := defaultDelay
+	for i := 0; i < maxRetries; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(delay)*time.Second)
+		defer cancel()
+
+		err = rep.DB.QueryRowContext(
+			ctx,
+			"SELECT * FROM metrics WHERE ID=$1 AND TYPE=$2", name, mtype,
+		).Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
+		if err != nil {
+			logger.Log.Error(fmt.Sprint("Error while reading from db (", i, " attempt): ", err.Error()))
+
+		} else {
+			return m, nil
+		}
+
+		delay += 2
 	}
 
-	return m, nil
+	return m, errors.New(fmt.Sprint("error while reading from database after ", maxRetries, " attempts"))
 }
 
 func (rep *DBRepository) AddMetrics(metrics []models.Metric) (int, error) {
