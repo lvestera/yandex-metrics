@@ -85,9 +85,6 @@ func (ms *MemStorage) AddCounter(name string, value int64) {
 }
 
 func (ms *MemStorage) AddMetrics(metrics []models.Metric) (int, error) {
-	ms.rwm.Lock()
-	defer ms.rwm.Unlock()
-
 	count := 0
 
 	for _, m := range metrics {

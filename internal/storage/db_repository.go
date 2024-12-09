@@ -106,9 +106,6 @@ func (rep *DBRepository) GetMetric(mtype string, name string) (m models.Metric, 
 }
 
 func (rep *DBRepository) AddMetrics(metrics []models.Metric) (int, error) {
-	rep.rwm.Lock()
-	defer rep.rwm.Unlock()
-
 	tx, err := rep.DB.Begin()
 	if err != nil {
 		return 0, err

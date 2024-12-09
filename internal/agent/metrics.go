@@ -54,7 +54,7 @@ func Send(m storage.Repository, c MClient, interval int) {
 
 		err = c.SendBatchUpdate(metrics)
 		if err != nil {
-			logger.Log.Info(fmt.Sprint("Sending the batch of ", len(metrics), "metrics failed"))
+			logger.Log.Info(fmt.Sprint("Sending the batch of ", len(metrics), "metrics failed: ", err.Error()))
 		}
 
 		time.Sleep(time.Duration(interval) * time.Second)
