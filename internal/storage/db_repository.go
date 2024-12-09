@@ -42,7 +42,7 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 		_, err := db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS metrics ("+
 			"id VARCHAR(100) PRIMARY KEY,"+
 			"type varchar(10) NOT NULL,"+
-			"delta int,"+
+			"delta bigint,"+
 			"gauge double precision"+
 			");")
 		if err != nil {
