@@ -19,7 +19,6 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	//defer db.Close()
 
 	//create repository
 	rep := &DBRepository{DB: db}

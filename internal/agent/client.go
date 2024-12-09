@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/lvestera/yandex-metrics/internal/models"
 	"github.com/lvestera/yandex-metrics/internal/server/logger"
 )
+
+const maxRetries = 3
 
 type MClient interface {
 	SendUpdate(m models.Metric) error
@@ -69,19 +73,37 @@ func (c *MetricClient) SendBatchUpdate(metrics []models.Metric) error {
 		return err
 	}
 
-	_, err = client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip").
-		SetBody(body).
-		Post(url)
+	delay := 1
 
-	if err != nil {
-		logger.Log.Error(err.Error())
+	for i := 0; i < maxRetries; i++ {
+		_, err := client.R().
+			SetHeader("Content-Type", "application/json").
+			SetHeader("Content-Encoding", "gzip").
+			SetBody(body).
+			Post(url)
+
+		if err != nil {
+			logger.Log.Error(err.Error())
+		} else {
+			logger.Log.Info(fmt.Sprint("Send ", len(metrics), " metrics to server"))
+			return nil
+		}
+
+		time.Sleep(time.Duration(delay))
+		delay += 2
 	}
 
-	logger.Log.Info(fmt.Sprint("Send ", len(metrics), " metrics to server"))
+	// _, err = client.R().
+	// 	SetHeader("Content-Type", "application/json").
+	// 	SetHeader("Content-Encoding", "gzip").
+	// 	SetBody(body).
+	// 	Post(url)
 
-	return err
+	// if err != nil {
+	// 	logger.Log.Error(err.Error())
+	// }
+
+	return errors.New(fmt.Sprint("Failed to send ", len(metrics), " metrics to server after ", maxRetries, " attempts"))
 }
 
 func Compress(data []byte) ([]byte, error) {
