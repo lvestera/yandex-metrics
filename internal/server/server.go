@@ -31,10 +31,8 @@ func (s *Server) Run() error {
 	if err := logger.Initialize(); err != nil {
 		return err
 	}
-	//init storage
-	storage := &storage.Storage{Cfg: s.Cfg}
-
-	repository, err := storage.InitRepository()
+	//init storage repository
+	repository, err := storage.NewStorageRepository(s.Cfg)
 	if err != nil {
 		return err
 	}

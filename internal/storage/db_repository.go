@@ -13,7 +13,23 @@ import (
 )
 
 const maxRetries = 3
-const defaultDelay = 1
+const defaultDelay time.Duration = 1
+const writeDbDelay time.Duration = 5
+
+const (
+	metricTableCheckSql  = "SELECT 1 FROM metrics;"
+	metricTableCreateSql = "CREATE TABLE IF NOT EXISTS metrics (" +
+		"id VARCHAR(100) PRIMARY KEY," +
+		"type varchar(10) NOT NULL," +
+		"delta bigint," +
+		"gauge double precision" +
+		");"
+	queryAllMetricsSql        = "SELECT * FROM metrics"
+	queryMetricByIdAndTypeSql = "SELECT * FROM metrics WHERE ID=$1 AND TYPE=$2"
+
+	insertMetricsSql = "INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) " +
+		"ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4"
+)
 
 type DBRepository struct {
 	DB  *sql.DB
@@ -39,17 +55,9 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 	logger.Log.Info("DB string " + configStr)
 
 	//проверить есть ли таблица
-	rows, tableCheck := db.Query("select 1 from metrics;")
+	rows, tableCheck := db.Query(metricTableCheckSql)
 	if tableCheck != nil {
-		//создать таблицу
-		// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		// defer cancel()
-		_, err := db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS metrics ("+
-			"id VARCHAR(100) PRIMARY KEY,"+
-			"type varchar(10) NOT NULL,"+
-			"delta bigint,"+
-			"gauge double precision"+
-			");")
+		_, err := db.ExecContext(context.Background(), metricTableCreateSql)
 		if err != nil {
 			return nil, err
 		}
@@ -71,26 +79,20 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 	metrics := make([]models.Metric, 0)
 
 	delay := defaultDelay
+	var m models.Metric
 	for i := 0; i < maxRetries; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(delay)*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), delay*time.Second)
 		defer cancel()
-		rows, err := rep.DB.QueryContext(ctx,
-			"SELECT * FROM metrics",
-		)
 
+		rows, err := rep.DB.QueryContext(ctx, queryAllMetricsSql)
 		if err != nil {
 			logger.Log.Error(fmt.Sprint("Error while reading from db (", i, " attempt): ", err.Error()))
-
 		} else {
-			var m models.Metric
-
 			for rows.Next() {
 				rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
 				metrics = append(metrics, m)
 			}
-
-			err = rows.Err()
-			if err != nil {
+			if err := rows.Err(); err != nil {
 				return nil, err
 			}
 
@@ -98,7 +100,6 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 		}
 
 		defer rows.Close()
-
 		delay += 2
 	}
 
@@ -111,20 +112,15 @@ func (rep *DBRepository) GetMetric(mtype string, name string) (m models.Metric, 
 
 	delay := defaultDelay
 	for i := 0; i < maxRetries; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(delay)*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), delay*time.Second)
 		defer cancel()
 
-		err = rep.DB.QueryRowContext(
-			ctx,
-			"SELECT * FROM metrics WHERE ID=$1 AND TYPE=$2", name, mtype,
-		).Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
+		err = rep.DB.QueryRowContext(ctx, queryMetricByIdAndTypeSql, name, mtype).Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
 		if err != nil {
 			logger.Log.Error(fmt.Sprint("Error while reading from db (", i, " attempt): ", err.Error()))
-
 		} else {
 			return m, nil
 		}
-
 		delay += 2
 	}
 
@@ -138,10 +134,7 @@ func (rep *DBRepository) AddMetrics(metrics []models.Metric) (int, error) {
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.PrepareContext(
-		context.Background(),
-		"INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) "+
-			"ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4")
+	stmt, err := tx.PrepareContext(context.Background(), insertMetricsSql)
 	if err != nil {
 		return 0, err
 	}
@@ -149,7 +142,10 @@ func (rep *DBRepository) AddMetrics(metrics []models.Metric) (int, error) {
 
 	count := 0
 	for _, m := range metrics {
-		_, err := stmt.ExecContext(context.Background(), m.ID, m.MType, m.Delta, m.Value)
+		ctx, cancel := context.WithTimeout(context.Background(), writeDbDelay*time.Second)
+		defer cancel()
+
+		_, err := stmt.ExecContext(ctx, m.ID, m.MType, m.Delta, m.Value)
 		if err != nil {
 			return count, err
 		}
@@ -163,11 +159,10 @@ func (rep *DBRepository) AddMetric(m models.Metric) (bool, error) {
 	rep.rwm.Lock()
 	defer rep.rwm.Unlock()
 
-	_, err := rep.DB.ExecContext(
-		context.Background(),
-		"INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4",
-		m.ID, m.MType, m.Delta, m.Value,
-	)
+	ctx, cancel := context.WithTimeout(context.Background(), writeDbDelay*time.Second)
+	defer cancel()
+
+	_, err := rep.DB.ExecContext(ctx, insertMetricsSql, m.ID, m.MType, m.Delta, m.Value)
 	if err != nil {
 		return false, err
 	}

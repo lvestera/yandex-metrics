@@ -4,21 +4,17 @@ import (
 	"github.com/lvestera/yandex-metrics/internal/server/config"
 )
 
-type Storage struct {
-	Cfg *config.Config
-}
-
-func (st Storage) InitRepository() (Repository, error) {
+func NewStorageRepository(cfg *config.Config) (Repository, error) {
 	var r Repository
 	var err error
-	if len(st.Cfg.DBConfig) > 0 {
-		r, err = NewDBRepository(st.Cfg.DBConfig)
+	if len(cfg.DBConfig) > 0 {
+		r, err = NewDBRepository(cfg.DBConfig)
 		if err != nil {
 			return nil, err
 		}
 
 	} else {
-		r, err = NewMemStorage(st.Cfg.Restore, st.Cfg.FileStoragePath)
+		r, err = NewMemStorage(cfg.Restore, cfg.FileStoragePath)
 		if err != nil {
 			return nil, err
 		}
