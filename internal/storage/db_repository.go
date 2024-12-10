@@ -25,7 +25,7 @@ const (
 		"gauge double precision" +
 		");"
 	queryAllMetricsSQL        = "SELECT * FROM metrics"
-	queryMetricByIdAndTypeSQL = "SELECT * FROM metrics WHERE ID=$1 AND TYPE=$2"
+	queryMetricByIDAndTypeSQL = "SELECT * FROM metrics WHERE ID=$1 AND TYPE=$2"
 
 	insertMetricsSQL = "INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) " +
 		"ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4"
@@ -115,7 +115,7 @@ func (rep *DBRepository) GetMetric(mtype string, name string) (m models.Metric, 
 		ctx, cancel := context.WithTimeout(context.Background(), delay*time.Second)
 		defer cancel()
 
-		err = rep.DB.QueryRowContext(ctx, queryMetricByIdAndTypeSQL, name, mtype).Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
+		err = rep.DB.QueryRowContext(ctx, queryMetricByIDAndTypeSQL, name, mtype).Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
 		if err != nil {
 			logger.Log.Error(fmt.Sprint("Error while reading from db (", i, " attempt): ", err.Error()))
 		} else {
