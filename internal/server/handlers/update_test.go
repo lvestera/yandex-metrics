@@ -84,8 +84,7 @@ func TestUpdateHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			m := NewMemStorage()
-			m.Init(false, "")
+			m, _ := NewMemStorage(false, "")
 			uh := UpdateHandler{
 				Ms:     m,
 				Format: adapters.HTTP{},
@@ -104,7 +103,9 @@ func TestUpdateHandler(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 
-			assert.Equal(t, tt.want.allMetrics, uh.Ms.GetMetrics())
+			resultMetrics, err := uh.Ms.GetMetrics()
+			assert.Equal(t, nil, err)
+			assert.Equal(t, tt.want.allMetrics, resultMetrics)
 		})
 	}
 }
@@ -205,7 +206,9 @@ func TestUpdateHandlerJson(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 
-			assert.Equal(t, tt.want.allMetrics, uh.Ms.GetMetrics())
+			resultMetrics, err := uh.Ms.GetMetrics()
+			assert.Equal(t, nil, err)
+			assert.Equal(t, tt.want.allMetrics, resultMetrics)
 		})
 	}
 }

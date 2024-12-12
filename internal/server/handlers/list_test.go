@@ -15,8 +15,7 @@ import (
 
 func TestListHandler(t *testing.T) {
 
-	metrics := storage.NewMemStorage()
-	metrics.Init(false, "")
+	metrics, _ := storage.NewMemStorage(false, "")
 
 	metrics.AddCounter("counter1", 1)
 	metrics.AddCounter("counter2", 2)

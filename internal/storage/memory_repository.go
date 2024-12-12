@@ -2,10 +2,10 @@ package storage
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
@@ -20,10 +20,10 @@ type MemStorage struct {
 	filepath string
 }
 
-func NewMemStorage() *MemStorage {
+func NewMemStorage(restore bool, filepath string) (*MemStorage, error) {
 	ms := new(MemStorage)
-
-	return ms
+	err := ms.Init(restore, filepath)
+	return ms, err
 }
 
 func (ms *MemStorage) Init(restore bool, filepath string) error {
@@ -84,31 +84,64 @@ func (ms *MemStorage) AddCounter(name string, value int64) {
 	ms.Counters[name] += value
 }
 
-func (ms *MemStorage) GetMetric(mtype string, name string) (string, bool) {
+func (ms *MemStorage) AddMetrics(metrics []models.Metric) (int, error) {
+	count := 0
+
+	for _, m := range metrics {
+		ok, err := ms.AddMetric(m)
+
+		if ok {
+			count = count + 1
+		}
+
+		if err != nil {
+			return count, err
+		}
+	}
+
+	return count, nil
+}
+
+func (ms *MemStorage) AddMetric(m models.Metric) (bool, error) {
+	switch m.MType {
+	case "gauge":
+		ms.AddGauge(m.ID, *m.Value)
+		return true, nil
+	case "counter":
+		ms.AddCounter(m.ID, *m.Delta)
+		return true, nil
+	default:
+		return false, errors.New("incorrect metric type")
+	}
+}
+
+func (ms *MemStorage) GetMetric(mtype string, name string) (m models.Metric, err error) {
 	ms.rwm.RLock()
 	defer ms.rwm.RUnlock()
+	m = models.Metric{ID: name, MType: mtype}
 	switch mtype {
 	case "gauge":
 		val, ok := ms.Gauges[name]
-
 		if !ok {
-			return "", ok
+			return m, errors.New("not found")
 		}
-		return strconv.FormatFloat(val, 'f', -1, 64), ok
+
+		m.Value = &val
+		return m, nil
 	case "counter":
 		val, ok := ms.Counters[name]
-
 		if !ok {
-			return "", ok
+			return m, errors.New("not found")
 		}
 
-		return strconv.FormatInt(val, 10), ok
+		m.Delta = &val
+		return m, nil
+	default:
+		return m, errors.New("incorrect metric type")
 	}
-
-	return "", false
 }
 
-func (ms *MemStorage) GetMetrics() []models.Metric {
+func (ms *MemStorage) GetMetrics() ([]models.Metric, error) {
 	metrics := []models.Metric{}
 
 	ms.rwm.RLock()
@@ -121,14 +154,18 @@ func (ms *MemStorage) GetMetrics() []models.Metric {
 		m := models.Metric{ID: name, MType: "counter", Delta: &elem}
 		metrics = append(metrics, m)
 	}
-	return metrics
+	return metrics, nil
 }
 
 func (ms *MemStorage) Save(interval int) error {
 	for {
 		runtime.Gosched()
 
-		data := ms.GetMetrics()
+		data, err := ms.GetMetrics()
+		if err != nil {
+			return err
+		}
+
 		jsonData, err := json.MarshalIndent(data, "", "    ")
 		if err != nil {
 			return err

@@ -8,6 +8,7 @@ import (
 
 type Format interface {
 	ParseUpdateRequest(r *http.Request) (models.Metric, error)
+	ParseUpdateBatchRequest(r *http.Request) ([]models.Metric, error)
 	ParseViewRequest(r *http.Request) (models.Metric, error)
 	BuildUpdateResponseBody(m models.Metric) ([]byte, error)
 	BuildViewResponseBody(m models.Metric) ([]byte, error)

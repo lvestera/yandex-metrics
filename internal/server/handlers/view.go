@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/lvestera/yandex-metrics/internal/server/adapters"
+	"github.com/lvestera/yandex-metrics/internal/server/logger"
 	"github.com/lvestera/yandex-metrics/internal/storage"
 )
 
@@ -24,16 +25,11 @@ func (mh ViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, ok := mh.Ms.GetMetric(m.MType, m.ID)
+	m, err = mh.Ms.GetMetric(m.MType, m.ID)
 
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-
-	err = m.SetValue(value)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest)+err.Error(), http.StatusBadRequest)
+		logger.Log.Error(err.Error())
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 

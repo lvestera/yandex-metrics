@@ -1,4 +1,4 @@
-package server
+package config
 
 import (
 	"flag"
@@ -6,18 +6,12 @@ import (
 	"strconv"
 )
 
-// var (
-// 	addr            string
-// 	storageInterval int
-// 	fileStoragePath string
-// 	restore         bool
-// )
-
 type Config struct {
 	Addr            string
 	StorageInterval int
 	FileStoragePath string
 	Restore         bool
+	DBConfig        string
 }
 
 func NewConfig() (*Config, error) {
@@ -34,6 +28,7 @@ func parseFlags(cfg *Config) error {
 	flag.IntVar(&cfg.StorageInterval, "i", 300, "Storage interval")
 	flag.StringVar(&cfg.FileStoragePath, "f", "file.txt", "File storage path")
 	flag.BoolVar(&cfg.Restore, "r", true, "Restore data on server run")
+	flag.StringVar(&cfg.DBConfig, "d", "", "Database connection")
 	flag.Parse()
 
 	if envAddr := os.Getenv("ADDRESS"); envAddr != "" {
@@ -60,6 +55,10 @@ func parseFlags(cfg *Config) error {
 		}
 
 		cfg.Restore = envRestoreVal
+	}
+
+	if envDBConfig := os.Getenv("DATABASE_DSN"); envDBConfig != "" {
+		cfg.DBConfig = envDBConfig
 	}
 
 	return nil

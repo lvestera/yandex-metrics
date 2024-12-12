@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/lvestera/yandex-metrics/internal/models"
 	"github.com/lvestera/yandex-metrics/internal/server/logger"
 	"github.com/lvestera/yandex-metrics/internal/storage"
 )
@@ -28,7 +29,14 @@ func Update(m storage.Repository, interval int) {
 		runtime.ReadMemStats(&rtm)
 
 		m.SetGauges(collectMetrics(&rtm))
-		m.AddCounter("PollCount", 1)
+
+		var pollMetricValue int64 = 1
+
+		m.AddMetric(models.Metric{
+			ID:    "PollCount",
+			MType: "counter",
+			Delta: &pollMetricValue,
+		})
 
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
@@ -39,11 +47,14 @@ func Send(m storage.Repository, c MClient, interval int) {
 	for {
 		runtime.Gosched()
 
-		for _, m := range m.GetMetrics() {
-			err := c.SendUpdate(m)
-			if err != nil {
-				logger.Log.Info(fmt.Sprint("Sending the", m.MType, "metric", m.ID, "failed"))
-			}
+		metrics, err := m.GetMetrics()
+		if err != nil {
+			logger.Log.Info("Get metrics failed")
+		}
+
+		err = c.SendBatchUpdate(metrics)
+		if err != nil {
+			logger.Log.Info(fmt.Sprint("Sending the batch of ", len(metrics), "metrics failed: ", err.Error()))
 		}
 
 		time.Sleep(time.Duration(interval) * time.Second)

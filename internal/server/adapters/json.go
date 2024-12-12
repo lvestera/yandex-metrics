@@ -29,6 +29,20 @@ func (f JSON) ParseUpdateRequest(r *http.Request) (models.Metric, error) {
 	return m, err
 }
 
+func (f JSON) ParseUpdateBatchRequest(r *http.Request) ([]models.Metric, error) {
+	var metrics []models.Metric
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		return metrics, err
+	}
+
+	err = json.Unmarshal(buf.Bytes(), &metrics)
+
+	return metrics, err
+}
+
 func (f JSON) ParseViewRequest(r *http.Request) (models.Metric, error) {
 	var m models.Metric
 	var buf bytes.Buffer
