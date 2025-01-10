@@ -11,6 +11,7 @@ import (
 type HTTP struct{}
 
 func (f HTTP) ParseUpdateRequest(r *http.Request) (models.Metric, error) {
+
 	m := models.Metric{ID: chi.URLParam(r, "name"), MType: chi.URLParam(r, "mtype")}
 
 	err := m.SetValue(chi.URLParam(r, "value"))
