@@ -10,6 +10,7 @@ var (
 	addr           string
 	reportInterval int
 	pollInterval   int
+	key            string
 )
 
 func parseFlags() error {
@@ -17,6 +18,7 @@ func parseFlags() error {
 	flag.StringVar(&addr, "a", "localhost:8080", "Server address")
 	flag.IntVar(&reportInterval, "r", 10, "Report interval")
 	flag.IntVar(&pollInterval, "p", 2, "Report interval")
+	flag.StringVar(&key, "k", "", "Secret Key")
 	flag.Parse()
 
 	if envAddr := os.Getenv("ADDRESS"); envAddr != "" {
@@ -39,6 +41,10 @@ func parseFlags() error {
 		}
 
 		pollInterval = envPollIntVal
+	}
+
+	if envKey := os.Getenv("KEY"); envKey != "" {
+		key = envKey
 	}
 
 	return nil

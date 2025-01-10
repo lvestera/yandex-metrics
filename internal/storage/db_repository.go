@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/lvestera/yandex-metrics/internal/models"
@@ -32,8 +31,7 @@ const (
 )
 
 type DBRepository struct {
-	DB  *sql.DB
-	rwm sync.RWMutex
+	DB *sql.DB
 }
 
 func NewDBRepository(configStr string) (*DBRepository, error) {
@@ -73,8 +71,6 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 }
 
 func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
-	rep.rwm.Lock()
-	defer rep.rwm.Unlock()
 
 	metrics := make([]models.Metric, 0)
 
@@ -107,8 +103,6 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 }
 
 func (rep *DBRepository) GetMetric(mtype string, name string) (m models.Metric, err error) {
-	rep.rwm.Lock()
-	defer rep.rwm.Unlock()
 
 	delay := defaultDelay
 	for i := 0; i < maxRetries; i++ {
@@ -156,8 +150,6 @@ func (rep *DBRepository) AddMetrics(metrics []models.Metric) (int, error) {
 }
 
 func (rep *DBRepository) AddMetric(m models.Metric) (bool, error) {
-	rep.rwm.Lock()
-	defer rep.rwm.Unlock()
 
 	ctx, cancel := context.WithTimeout(context.Background(), writeDBDelay*time.Second)
 	defer cancel()

@@ -10,6 +10,7 @@ import (
 	"github.com/lvestera/yandex-metrics/internal/server/config"
 	"github.com/lvestera/yandex-metrics/internal/server/handlers"
 	"github.com/lvestera/yandex-metrics/internal/server/logger"
+	"github.com/lvestera/yandex-metrics/internal/server/sign"
 	"github.com/lvestera/yandex-metrics/internal/storage"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -37,6 +38,8 @@ func (s *Server) Run() error {
 		return err
 	}
 
+	sign.NewSign(s.Cfg.Key)
+
 	go repository.Save(s.Cfg.StorageInterval)
 
 	quit := make(chan os.Signal)
@@ -55,6 +58,7 @@ func MetricRouter(metric storage.Repository) chi.Router {
 	r.Use(logger.RequestLogger)
 	r.Use(compressor.RequestCompress)
 	r.Use(compressor.ResponseCompress)
+	r.Use(sign.RequestHashCheck)
 
 	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", handlers.UpdateHandler{Ms: metric, Format: adapters.HTTP{}})
 	r.Method(http.MethodGet, "/value/{mtype}/{name}", handlers.ViewHandler{Ms: metric, Format: adapters.HTTP{}})
