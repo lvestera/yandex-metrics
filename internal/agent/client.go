@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -79,7 +80,7 @@ func (c *MetricClient) SendBatchUpdate(metrics []models.Metric, key string) erro
 	hash := ""
 
 	if len(key) > 0 {
-		hash = string(CalcHash(body, key))
+		hash = CalcHash(body, key)
 	}
 
 	for i := 0; i < maxRetries; i++ {
@@ -130,7 +131,7 @@ func Compress(data []byte) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func CalcHash(body []byte, key string) []byte {
+func CalcHash(body []byte, key string) string {
 	/*
 	   Реализуйте механизм подписи передаваемых данных по алгоритму SHA256. Для этого посчитайте hash от всего тела запроса и разместите его в HTTP-заголовке HashSHA256.
 	   Хеш нужно считать от строки с учётом ключа, который передан агенту/серверу на старте: hash(value, key)
@@ -138,5 +139,5 @@ func CalcHash(body []byte, key string) []byte {
 
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write(body)
-	return h.Sum(nil)
+	return hex.EncodeToString(h.Sum(nil))
 }
