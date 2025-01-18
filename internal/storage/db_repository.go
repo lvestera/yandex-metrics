@@ -27,7 +27,7 @@ const (
 	queryMetricByIDAndTypeSQL = "SELECT * FROM metrics WHERE ID=$1 AND TYPE=$2"
 
 	insertMetricsSQL = "INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) " +
-		"ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4"
+		"ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS BIGINT)+CAST($3 AS BIGINT), gauge=$4"
 )
 
 type DBRepository struct {
