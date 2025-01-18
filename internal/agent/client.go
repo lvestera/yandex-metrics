@@ -71,17 +71,18 @@ func (c *MetricClient) SendBatchUpdate(metrics []models.Metric, key string) erro
 	url := fmt.Sprint("http://", c.Host, "/updates/")
 	client := resty.New()
 
+	hash := ""
+
+	if len(key) > 0 {
+		hash = CalcHash(body, key)
+	}
+
 	if body, err = Compress(body); err != nil {
 		logger.Log.Error(err.Error())
 		return err
 	}
 
 	delay := 1
-	hash := ""
-
-	if len(key) > 0 {
-		hash = CalcHash(body, key)
-	}
 
 	for i := 0; i < maxRetries; i++ {
 		request := client.R()

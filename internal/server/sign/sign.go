@@ -1,8 +1,10 @@
 package sign
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"net/http"
 )
@@ -25,10 +27,15 @@ func RequestHashCheck(h http.Handler) http.Handler {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			defer r.Body.Close()
+			r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+			requestHash, err := hex.DecodeString(hash)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 
 			newHash := CalcHash(body, keyStr)
-
-			if !hmac.Equal([]byte(hash), newHash) {
+			if !hmac.Equal(requestHash, newHash) {
 				http.Error(w, "incorrect hash", http.StatusBadRequest)
 			}
 		}
