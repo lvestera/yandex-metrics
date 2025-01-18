@@ -42,7 +42,7 @@ func Update(m storage.Repository, interval int) {
 	}
 }
 
-func Send(m storage.Repository, c MClient, interval int) {
+func Send(m storage.Repository, c MClient, interval int, key string) {
 
 	for {
 		runtime.Gosched()
@@ -52,7 +52,7 @@ func Send(m storage.Repository, c MClient, interval int) {
 			logger.Log.Info("Get metrics failed")
 		}
 
-		err = c.SendBatchUpdate(metrics)
+		err = c.SendBatchUpdate(metrics, key)
 		if err != nil {
 			logger.Log.Info(fmt.Sprint("Sending the batch of ", len(metrics), "metrics failed: ", err.Error()))
 		}

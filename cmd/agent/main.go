@@ -30,5 +30,5 @@ func main() {
 	}
 
 	go agent.Update(metric, pollInterval)
-	agent.Send(metric, c, reportInterval)
+	agent.Send(metric, c, reportInterval, key)
 }

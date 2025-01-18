@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/lvestera/yandex-metrics/internal/models"
@@ -28,12 +27,11 @@ const (
 	queryMetricByIDAndTypeSQL = "SELECT * FROM metrics WHERE ID=$1 AND TYPE=$2"
 
 	insertMetricsSQL = "INSERT INTO metrics (id, type, delta, gauge) VALUES ($1, $2, $3, $4) " +
-		"ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS INTEGER)+CAST($3 AS INTEGER), gauge=$4"
+		"ON CONFLICT (id) DO UPDATE SET delta=CAST(metrics.delta AS BIGINT)+CAST($3 AS BIGINT), gauge=$4"
 )
 
 type DBRepository struct {
-	DB  *sql.DB
-	rwm sync.RWMutex
+	DB *sql.DB
 }
 
 func NewDBRepository(configStr string) (*DBRepository, error) {
@@ -73,8 +71,6 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 }
 
 func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
-	rep.rwm.Lock()
-	defer rep.rwm.Unlock()
 
 	metrics := make([]models.Metric, 0)
 
@@ -107,8 +103,6 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 }
 
 func (rep *DBRepository) GetMetric(mtype string, name string) (m models.Metric, err error) {
-	rep.rwm.Lock()
-	defer rep.rwm.Unlock()
 
 	delay := defaultDelay
 	for i := 0; i < maxRetries; i++ {
@@ -156,8 +150,6 @@ func (rep *DBRepository) AddMetrics(metrics []models.Metric) (int, error) {
 }
 
 func (rep *DBRepository) AddMetric(m models.Metric) (bool, error) {
-	rep.rwm.Lock()
-	defer rep.rwm.Unlock()
 
 	ctx, cancel := context.WithTimeout(context.Background(), writeDBDelay*time.Second)
 	defer cancel()
