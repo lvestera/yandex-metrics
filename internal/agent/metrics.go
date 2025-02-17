@@ -92,7 +92,7 @@ func UpdateAdditionalMetrics(m storage.Repository, interval int) {
 //	}
 func Send(jobs <-chan struct{}, m storage.Repository, c MClient, key string) {
 
-	for _ = range jobs {
+	for range jobs {
 		metrics, err := m.GetMetrics()
 		if err != nil {
 			logger.Log.Info("Get metrics failed")
