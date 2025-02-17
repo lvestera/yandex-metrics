@@ -21,7 +21,7 @@ func TestUpdate(t *testing.T) {
 		assert.NotNil(t, err)
 	}
 
-	go Update(metric, 2)
+	go UpdateMainMetrics(metric, 2)
 	time.Sleep(2 * time.Second)
 
 	pollCount = 1
