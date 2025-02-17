@@ -9,7 +9,5 @@ type Repository interface {
 	AddMetrics(metrics []models.Metric) (int, error)
 	AddMetric(m models.Metric) (bool, error)
 
-	SetGauges(gauges map[string]float64)
-
 	Save(interval int) error
 }

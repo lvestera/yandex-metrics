@@ -64,14 +64,6 @@ func (ms *MemStorage) Init(restore bool, filepath string) error {
 	return nil
 }
 
-func (ms *MemStorage) SetGauges(gauges map[string]float64) {
-	ms.rwm.Lock()
-	defer ms.rwm.Unlock()
-	for name, value := range gauges {
-		ms.Gauges[name] = value
-	}
-}
-
 func (ms *MemStorage) AddGauge(name string, value float64) {
 	ms.rwm.Lock()
 	defer ms.rwm.Unlock()
