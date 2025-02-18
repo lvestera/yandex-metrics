@@ -48,8 +48,6 @@ func main() {
 
 	go agent.PrepareSend(jobs, cfg.ReportInterval)
 
-	//go agent.Send(metric, c, cfg.ReportInterval, cfg.Key, cfg.RateLimit)
-
 	signal.Notify(doneCh, os.Interrupt, syscall.SIGTERM)
 	<-doneCh
 

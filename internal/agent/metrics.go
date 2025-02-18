@@ -74,22 +74,6 @@ func UpdateAdditionalMetrics(m storage.Repository, interval int) {
 	}
 }
 
-// func Send(m storage.Repository, c MClient, interval int, key string, rateLimit int) {
-
-// 	for {
-// 		metrics, err := m.GetMetrics()
-// 		if err != nil {
-// 			logger.Log.Info("Get metrics failed")
-// 		}
-
-// 		err = c.SendBatchUpdate(metrics, key)
-// 		if err != nil {
-// 			logger.Log.Info(fmt.Sprint("Sending the batch of ", len(metrics), "metrics failed: ", err.Error()))
-// 		}
-
-//			time.Sleep(time.Duration(interval) * time.Second)
-//		}
-//	}
 func Send(jobs <-chan struct{}, m storage.Repository, c MClient, key string) {
 
 	for range jobs {
@@ -104,6 +88,7 @@ func Send(jobs <-chan struct{}, m storage.Repository, c MClient, key string) {
 		}
 	}
 }
+
 func PrepareSend(jobs chan<- struct{}, interval int) {
 	for {
 		jobs <- struct{}{}
