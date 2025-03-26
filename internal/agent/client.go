@@ -3,6 +3,9 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,7 +20,7 @@ const maxRetries = 3
 
 type MClient interface {
 	SendUpdate(m models.Metric) error
-	SendBatchUpdate(metrics []models.Metric) error
+	SendBatchUpdate(metrics []models.Metric, key string) error
 }
 type MetricClient struct {
 	Host string
@@ -56,7 +59,7 @@ func (c *MetricClient) SendUpdate(m models.Metric) error {
 	return err
 }
 
-func (c *MetricClient) SendBatchUpdate(metrics []models.Metric) error {
+func (c *MetricClient) SendBatchUpdate(metrics []models.Metric, key string) error {
 	var err error
 	var body []byte
 
@@ -68,6 +71,12 @@ func (c *MetricClient) SendBatchUpdate(metrics []models.Metric) error {
 	url := fmt.Sprint("http://", c.Host, "/updates/")
 	client := resty.New()
 
+	hash := ""
+
+	if len(key) > 0 {
+		hash = CalcHash(body, key)
+	}
+
 	if body, err = Compress(body); err != nil {
 		logger.Log.Error(err.Error())
 		return err
@@ -76,7 +85,12 @@ func (c *MetricClient) SendBatchUpdate(metrics []models.Metric) error {
 	delay := 1
 
 	for i := 0; i < maxRetries; i++ {
-		_, err := client.R().
+		request := client.R()
+
+		if len(hash) > 0 {
+			request = request.SetHeader("HashSHA256", hash)
+		}
+		_, err := request.
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Content-Encoding", "gzip").
 			SetBody(body).
@@ -92,16 +106,6 @@ func (c *MetricClient) SendBatchUpdate(metrics []models.Metric) error {
 		time.Sleep(time.Duration(delay))
 		delay += 2
 	}
-
-	// _, err = client.R().
-	// 	SetHeader("Content-Type", "application/json").
-	// 	SetHeader("Content-Encoding", "gzip").
-	// 	SetBody(body).
-	// 	Post(url)
-
-	// if err != nil {
-	// 	logger.Log.Error(err.Error())
-	// }
 
 	return errors.New(fmt.Sprint("Failed to send ", len(metrics), " metrics to server after ", maxRetries, " attempts"))
 }
@@ -126,4 +130,15 @@ func Compress(data []byte) ([]byte, error) {
 	}
 	// переменная b содержит сжатые данные
 	return b.Bytes(), nil
+}
+
+func CalcHash(body []byte, key string) string {
+	/*
+	   Реализуйте механизм подписи передаваемых данных по алгоритму SHA256. Для этого посчитайте hash от всего тела запроса и разместите его в HTTP-заголовке HashSHA256.
+	   Хеш нужно считать от строки с учётом ключа, который передан агенту/серверу на старте: hash(value, key)
+	*/
+
+	h := hmac.New(sha256.New, []byte(key))
+	h.Write(body)
+	return hex.EncodeToString(h.Sum(nil))
 }

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -10,7 +11,9 @@ import (
 	"github.com/lvestera/yandex-metrics/internal/server/config"
 	"github.com/lvestera/yandex-metrics/internal/server/handlers"
 	"github.com/lvestera/yandex-metrics/internal/server/logger"
+	"github.com/lvestera/yandex-metrics/internal/server/sign"
 	"github.com/lvestera/yandex-metrics/internal/storage"
+	"golang.org/x/sync/errgroup"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -27,26 +30,50 @@ func NewServer(cfg *config.Config) *Server {
 
 func (s *Server) Run() error {
 
+	ctx, cancel := context.WithCancel(context.Background())
 	//init logger
 	if err := logger.Initialize(); err != nil {
+		cancel()
 		return err
 	}
 	//init storage repository
 	repository, err := storage.NewStorageRepository(s.Cfg)
 	if err != nil {
+		cancel()
 		return err
 	}
 
-	go repository.Save(s.Cfg.StorageInterval)
+	sign.NewSign(s.Cfg.Key)
+
+	go repository.Save(ctx, s.Cfg.StorageInterval)
 
 	quit := make(chan os.Signal)
 	go func() {
 		<-quit
 		logger.Log.Info("Receive interrupt signal. Server Close")
+		cancel()
 	}()
 
-	logger.Log.Info("Server starts at " + s.Cfg.Addr)
-	return http.ListenAndServe(s.Cfg.Addr, MetricRouter(repository))
+	httpServer := &http.Server{
+		Addr:    s.Cfg.Addr,
+		Handler: MetricRouter(repository),
+	}
+
+	g, gCtx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		logger.Log.Info("Server starts at " + s.Cfg.Addr)
+		return httpServer.ListenAndServe()
+	})
+	g.Go(func() error {
+		<-gCtx.Done()
+		return httpServer.Shutdown(context.Background())
+	})
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func MetricRouter(metric storage.Repository) chi.Router {
@@ -55,6 +82,7 @@ func MetricRouter(metric storage.Repository) chi.Router {
 	r.Use(logger.RequestLogger)
 	r.Use(compressor.RequestCompress)
 	r.Use(compressor.ResponseCompress)
+	r.Use(sign.RequestHashCheck)
 
 	r.Method(http.MethodPost, "/update/{mtype}/{name}/{value}", handlers.UpdateHandler{Ms: metric, Format: adapters.HTTP{}})
 	r.Method(http.MethodGet, "/value/{mtype}/{name}", handlers.ViewHandler{Ms: metric, Format: adapters.HTTP{}})

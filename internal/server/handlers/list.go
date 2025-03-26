@@ -37,9 +37,10 @@ type ViewData struct {
 	Counters map[string]string
 }
 
-func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+func (h ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
+
 	t, err := template.New("webpage").Parse(tpl)
 	if err != nil {
 		logger.Log.Error(err.Error())
@@ -51,7 +52,9 @@ func (h ListHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	counters := make(map[string]string)
 	var mValue string
 
-	metrics, err := h.Ms.GetMetrics()
+	ctx := r.Context()
+
+	metrics, err := h.Ms.GetMetrics(ctx)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)

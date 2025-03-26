@@ -15,17 +15,17 @@ type ViewHandler struct {
 
 func (mh ViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	m, err := mh.Format.ParseViewRequest(r)
 	contentType := mh.Format.ContentType()
-
 	w.Header().Add("Content-Type", contentType)
 
+	m, err := mh.Format.ParseViewRequest(r)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest)+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	m, err = mh.Ms.GetMetric(m.MType, m.ID)
+	ctx := r.Context()
+	m, err = mh.Ms.GetMetric(ctx, m.MType, m.ID)
 
 	if err != nil {
 		logger.Log.Error(err.Error())
