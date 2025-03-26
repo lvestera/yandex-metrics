@@ -14,36 +14,31 @@ type UpdateHandler struct {
 }
 
 func (uh UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	m, err := uh.Format.ParseUpdateRequest(r)
 	contentType := uh.Format.ContentType()
-
 	w.Header().Add("Content-Type", contentType)
 
+	m, err := uh.Format.ParseUpdateRequest(r)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	_, err = uh.Ms.AddMetric(m)
+	err = uh.Ms.AddMetric(m)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	m, err = uh.Ms.GetMetric(m.MType, m.ID)
+	ctx := r.Context()
+
+	m, err = uh.Ms.GetMetric(ctx, m.MType, m.ID)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	// value, ok := uh.Ms.GetMetric(m.MType, m.ID)
-	// if !ok {
-	// 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-	// 	return
-	// }
-	// m.SetValue(value)
 
 	responseBody, err := uh.Format.BuildUpdateResponseBody(m)
 	if err != nil {

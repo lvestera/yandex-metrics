@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -80,34 +81,31 @@ func (ms *MemStorage) AddMetrics(metrics []models.Metric) (int, error) {
 	count := 0
 
 	for _, m := range metrics {
-		ok, err := ms.AddMetric(m)
-
-		if ok {
-			count = count + 1
-		}
-
+		err := ms.AddMetric(m)
 		if err != nil {
 			return count, err
 		}
+
+		count = count + 1
 	}
 
 	return count, nil
 }
 
-func (ms *MemStorage) AddMetric(m models.Metric) (bool, error) {
+func (ms *MemStorage) AddMetric(m models.Metric) error {
 	switch m.MType {
 	case "gauge":
 		ms.AddGauge(m.ID, *m.Value)
-		return true, nil
+		return nil
 	case "counter":
 		ms.AddCounter(m.ID, *m.Delta)
-		return true, nil
+		return nil
 	default:
-		return false, errors.New("incorrect metric type")
+		return errors.New("incorrect metric type")
 	}
 }
 
-func (ms *MemStorage) GetMetric(mtype string, name string) (m models.Metric, err error) {
+func (ms *MemStorage) GetMetric(ctx context.Context, mtype string, name string) (m models.Metric, err error) {
 	ms.rwm.RLock()
 	defer ms.rwm.RUnlock()
 	m = models.Metric{ID: name, MType: mtype}
@@ -133,7 +131,7 @@ func (ms *MemStorage) GetMetric(mtype string, name string) (m models.Metric, err
 	}
 }
 
-func (ms *MemStorage) GetMetrics() ([]models.Metric, error) {
+func (ms *MemStorage) GetMetrics(ctx context.Context) ([]models.Metric, error) {
 	metrics := []models.Metric{}
 
 	ms.rwm.RLock()
@@ -149,11 +147,11 @@ func (ms *MemStorage) GetMetrics() ([]models.Metric, error) {
 	return metrics, nil
 }
 
-func (ms *MemStorage) Save(interval int) error {
+func (ms *MemStorage) Save(ctx context.Context, interval int) error {
 	for {
 		runtime.Gosched()
 
-		data, err := ms.GetMetrics()
+		data, err := ms.GetMetrics(ctx)
 		if err != nil {
 			return err
 		}
@@ -178,13 +176,6 @@ func (ms *MemStorage) Save(interval int) error {
 				return nil
 			}()
 
-			// file, err := os.OpenFile(ms.filepath, os.O_WRONLY|os.O_CREATE, 0666)
-			// if err != nil {
-			// 	return err
-			// }
-			// defer file.Close()
-
-			// _, err = file.Write(jsonData)
 			if err != nil {
 				logger.Log.Info("Can't save into file")
 				return err

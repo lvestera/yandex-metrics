@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -103,7 +104,7 @@ func TestUpdateHandler(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 
-			resultMetrics, err := uh.Ms.GetMetrics()
+			resultMetrics, err := uh.Ms.GetMetrics(context.Background())
 			assert.Equal(t, nil, err)
 			assert.Equal(t, tt.want.allMetrics, resultMetrics)
 		})
@@ -206,7 +207,7 @@ func TestUpdateHandlerJson(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
 
-			resultMetrics, err := uh.Ms.GetMetrics()
+			resultMetrics, err := uh.Ms.GetMetrics(context.Background())
 			assert.Equal(t, nil, err)
 			assert.Equal(t, tt.want.allMetrics, resultMetrics)
 		})

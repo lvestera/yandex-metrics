@@ -70,16 +70,13 @@ func NewDBRepository(configStr string) (*DBRepository, error) {
 	return rep, nil
 }
 
-func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
+func (rep *DBRepository) GetMetrics(ctx context.Context) ([]models.Metric, error) {
 
 	metrics := make([]models.Metric, 0)
 
 	delay := defaultDelay
 	var m models.Metric
 	for i := 0; i < maxRetries; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), delay*time.Second)
-		defer cancel()
-
 		rows, err := rep.DB.QueryContext(ctx, queryAllMetricsSQL)
 		if err != nil {
 			logger.Log.Error(fmt.Sprint("Error while reading from db (", i, " attempt): ", err.Error()))
@@ -96,25 +93,24 @@ func (rep *DBRepository) GetMetrics() ([]models.Metric, error) {
 		}
 
 		defer rows.Close()
+		time.Sleep(time.Duration(delay) * time.Second)
 		delay += 2
 	}
 
 	return metrics, errors.New(fmt.Sprint("error while reading from database after ", maxRetries, " attempts"))
 }
 
-func (rep *DBRepository) GetMetric(mtype string, name string) (m models.Metric, err error) {
+func (rep *DBRepository) GetMetric(ctx context.Context, mtype string, name string) (m models.Metric, err error) {
 
 	delay := defaultDelay
 	for i := 0; i < maxRetries; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), delay*time.Second)
-		defer cancel()
-
 		err = rep.DB.QueryRowContext(ctx, queryMetricByIDAndTypeSQL, name, mtype).Scan(&m.ID, &m.MType, &m.Delta, &m.Value)
 		if err != nil {
 			logger.Log.Error(fmt.Sprint("Error while reading from db (", i, " attempt): ", err.Error()))
 		} else {
 			return m, nil
 		}
+		time.Sleep(time.Duration(delay) * time.Second)
 		delay += 2
 	}
 
@@ -149,24 +145,24 @@ func (rep *DBRepository) AddMetrics(metrics []models.Metric) (int, error) {
 	return count, tx.Commit()
 }
 
-func (rep *DBRepository) AddMetric(m models.Metric) (bool, error) {
+func (rep *DBRepository) AddMetric(m models.Metric) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), writeDBDelay*time.Second)
 	defer cancel()
 
 	_, err := rep.DB.ExecContext(ctx, insertMetricsSQL, m.ID, m.MType, m.Delta, m.Value)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 func (rep *DBRepository) SetGauges(gauges map[string]float64) {
 
 }
 
-func (rep *DBRepository) Save(interval int) error {
+func (rep *DBRepository) Save(ctx context.Context, interval int) error {
 	return nil
 }
 
